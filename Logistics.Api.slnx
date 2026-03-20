@@ -1,0 +1,61 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Logistics.Api.BuildingBlocks.Application/Logistics.Api.BuildingBlocks.Application.csproj" />
+    <Project Path="src/BuildingBlocks/Logistics.Api.BuildingBlocks.Contracts/Logistics.Api.BuildingBlocks.Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/Logistics.Api.BuildingBlocks.Domain/Logistics.Api.BuildingBlocks.Domain.csproj" />
+    <Project Path="src/BuildingBlocks/Logistics.Api.BuildingBlocks.Infrastructure/Logistics.Api.BuildingBlocks.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/Logistics.Api.BuildingBlocks.Observability/Logistics.Api.BuildingBlocks.Observability.csproj" />
+  </Folder>
+  <Folder Name="/src/Host/">
+    <Project Path="src/Host/Logistics.Api.Host/Logistics.Api.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Hubs/">
+    <Project Path="src/Services/Hubs/Logistics.Api.Hubs.Application/Logistics.Api.Hubs.Application.csproj" />
+    <Project Path="src/Services/Hubs/Logistics.Api.Hubs.Domain/Logistics.Api.Hubs.Domain.csproj" />
+    <Project Path="src/Services/Hubs/Logistics.Api.Hubs.Infrastructure/Logistics.Api.Hubs.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/Logistics.Api.Identity.Application/Logistics.Api.Identity.Application.csproj" />
+    <Project Path="src/Services/Identity/Logistics.Api.Identity.Domain/Logistics.Api.Identity.Domain.csproj" />
+    <Project Path="src/Services/Identity/Logistics.Api.Identity.Infrastructure/Logistics.Api.Identity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Merchants/">
+    <Project Path="src/Services/Merchants/Logistics.Api.Merchants.Application/Logistics.Api.Merchants.Application.csproj" />
+    <Project Path="src/Services/Merchants/Logistics.Api.Merchants.Domain/Logistics.Api.Merchants.Domain.csproj" />
+    <Project Path="src/Services/Merchants/Logistics.Api.Merchants.Infrastructure/Logistics.Api.Merchants.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Notifications/">
+    <Project Path="src/Services/Notifications/Logistics.Api.Notifications.Application/Logistics.Api.Notifications.Application.csproj" />
+    <Project Path="src/Services/Notifications/Logistics.Api.Notifications.Infrastructure/Logistics.Api.Notifications.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Pricing/">
+    <Project Path="src/Services/Pricing/Logistics.Api.Pricing.Application/Logistics.Api.Pricing.Application.csproj" />
+    <Project Path="src/Services/Pricing/Logistics.Api.Pricing.Domain/Logistics.Api.Pricing.Domain.csproj" />
+    <Project Path="src/Services/Pricing/Logistics.Api.Pricing.Infrastructure/Logistics.Api.Pricing.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Reconciliation/">
+    <Project Path="src/Services/Reconciliation/Logistics.Api.Reconciliation.Application/Logistics.Api.Reconciliation.Application.csproj" />
+    <Project Path="src/Services/Reconciliation/Logistics.Api.Reconciliation.Domain/Logistics.Api.Reconciliation.Domain.csproj" />
+    <Project Path="src/Services/Reconciliation/Logistics.Api.Reconciliation.Infrastructure/Logistics.Api.Reconciliation.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Search/">
+    <Project Path="src/Services/Search/Logistics.Api.Search.Application/Logistics.Api.Search.Application.csproj" />
+    <Project Path="src/Services/Search/Logistics.Api.Search.Infrastructure/Logistics.Api.Search.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Shipments/">
+    <Project Path="src/Services/Shipments/Logistics.Api.Shipments.Application/Logistics.Api.Shipments.Application.csproj" />
+    <Project Path="src/Services/Shipments/Logistics.Api.Shipments.Domain/Logistics.Api.Shipments.Domain.csproj" />
+    <Project Path="src/Services/Shipments/Logistics.Api.Shipments.Infrastructure/Logistics.Api.Shipments.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Tracking/">
+    <Project Path="src/Services/Tracking/Logistics.Api.Tracking.Application/Logistics.Api.Tracking.Application.csproj" />
+    <Project Path="src/Services/Tracking/Logistics.Api.Tracking.Infrastructure/Logistics.Api.Tracking.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Logistics.Api.ArchitectureTests/Logistics.Api.ArchitectureTests.csproj" />
+    <Project Path="tests/Logistics.Api.IntegrationTests/Logistics.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Logistics.Api.UnitTests/Logistics.Api.UnitTests.csproj" />
+  </Folder>
+</Solution>

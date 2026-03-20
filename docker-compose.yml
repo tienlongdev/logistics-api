@@ -1,0 +1,331 @@
+# Docker Compose cho Logistics API Local Development Stack
+# Mục tiêu:
+# - Chạy toàn bộ hạ tầng local để dev/test API
+# - Tách rõ từng thành phần: DB, cache, broker, search, logging, metrics, tracing
+# - Dễ boot nhanh bằng 1 lệnh: docker compose up -d
+
+services:
+  # =============================================
+  # PostgreSQL - Source of Truth Database
+  # Dùng để làm gì?
+  # - Database chính cho nghiệp vụ
+  # - Lưu dữ liệu bền vững: users, merchants, shipments, pricing, reconciliation...
+  # - Là nguồn dữ liệu "chuẩn" để đọc/ghi
+  #
+  # Vì sao cần trong Logistics API?
+  # - Các bounded contexts như Identity, Merchants, Shipments, Hubs...
+  #   thường cần quan hệ dữ liệu rõ ràng, transaction, indexing
+  # - PostgreSQL rất hợp cho transactional workloads
+  # =============================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: logistics_postgres
+    environment:
+      POSTGRES_DB: logistics_db
+      POSTGRES_USER: logistics_user
+      POSTGRES_PASSWORD: logistics_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volume giữ dữ liệu DB kể cả khi container restart
+      - postgres_data:/var/lib/postgresql/data
+
+      # Script init chạy lần đầu để tạo schema/extensions cần thiết
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # Kiểm tra PostgreSQL đã sẵn sàng nhận kết nối hay chưa
+      test: ["CMD-SHELL", "pg_isready -U logistics_user -d logistics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Redis - Cache / Distributed Lock / Fast Access Data
+  # Dùng để làm gì?
+  # - Cache dữ liệu nóng để giảm query DB
+  # - Lưu dữ liệu tạm thời: OTP, session, rate-limit counter
+  # - Có thể dùng cho distributed lock, idempotency key
+  #
+  # Vì sao cần trong Logistics API?
+  # - Tránh đọc PostgreSQL quá nhiều với dữ liệu tra cứu lặp lại
+  # - Hữu ích cho tracking status, lookup pricing cache, token blacklist...
+  # =============================================
+  redis:
+    image: redis:7-alpine
+    container_name: logistics_redis
+    command: redis-server --requirepass redis_pass --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      # Giữ dữ liệu Redis append-only giữa các lần restart
+      - redis_data:/data
+    healthcheck:
+      # Ping Redis để biết service đã ready chưa
+      test: ["CMD", "redis-cli", "-a", "redis_pass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logistics_net
+
+  # =============================================
+  # RabbitMQ - Message Broker / Async Communication
+  # Dùng để làm gì?
+  # - Gửi/nhận message giữa các service
+  # - Hỗ trợ event-driven architecture
+  # - Tách xử lý đồng bộ và bất đồng bộ
+  #
+  # Vì sao cần trong Logistics API?
+  # - Khi tạo shipment có thể publish event cho Notifications, Search, Tracking...
+  # - Giảm coupling giữa các module
+  # - Retry / queue / consumer background tiện hơn HTTP gọi thẳng
+  #
+  # Port:
+  # - 5672  : AMQP cho app kết nối
+  # - 15672 : Management UI để xem queue/exchange/binding
+  # =============================================
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: logistics_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: logistics_user
+      RABBITMQ_DEFAULT_PASS: logistics_pass
+      RABBITMQ_DEFAULT_VHOST: logistics_vhost
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      # RabbitMQ đã hoạt động ổn chưa
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Elasticsearch - Search Engine / Full-text Search / Indexing
+  # Dùng để làm gì?
+  # - Tạo index riêng phục vụ search cực nhanh
+  # - Tìm kiếm full-text, filter, sort, aggregation
+  # - Hữu ích cho tracking/search shipments, merchants, hubs...
+  #
+  # Vì sao không search trực tiếp trên PostgreSQL?
+  # - Search phức tạp, fuzzy search, autocomplete, analytics nhẹ
+  #   thường hợp với Elasticsearch hơn
+  #
+  # Lưu ý:
+  # - discovery.type=single-node để chạy local dev
+  # - xpack security tắt để config local đơn giản hơn
+  # =============================================
+  elasticsearch:
+    image: elasticsearch:8.17.0
+    container_name: logistics_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200" # HTTP API
+      - "9300:9300" # Internal transport
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      # Chờ cluster health OK rồi Kibana mới nên phụ thuộc vào nó
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Kibana - Elasticsearch UI
+  # Dùng để làm gì?
+  # - Giao diện web để xem index, query dữ liệu, debug search
+  # - Phù hợp khi cần kiểm tra document đã được sync sang ES chưa
+  #
+  # Vì sao cần trong dev?
+  # - Khi app publish event và index sang ES, bạn có thể nhìn trực tiếp
+  #   document đang nằm trong index nào, mapping ra sao
+  # =============================================
+  kibana:
+    image: kibana:8.17.0
+    container_name: logistics_kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Seq - Structured Log Viewer
+  # Dùng để làm gì?
+  # - Nhận log structured từ Serilog
+  # - Tìm kiếm log theo field: CorrelationId, TraceId, UserId, ShipmentId...
+  # - Debug request/exception dễ hơn rất nhiều so với log text thường
+  #
+  # Vì sao cần trong Logistics API?
+  # - Hệ thống nhiều module/event thì log text thuần rất khó lần
+  # - Seq giúp lọc đúng flow đang lỗi hoặc đúng entity đang xử lý
+  #
+  # Port:
+  # - 5341 host -> 80 container: giao diện web Seq
+  # - 5342 host -> 5341 container: ingestion/API port nếu cần map riêng
+  # =============================================
+  seq:
+    image: datalust/seq:2024.3
+    container_name: logistics_seq
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:80"
+      - "5342:5341"
+    volumes:
+      - seq_data:/data
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Prometheus - Metrics Collection
+  # Dùng để làm gì?
+  # - Scrape metrics từ app định kỳ
+  # - Lưu time-series metrics như request count, latency, error rate
+  # - Dùng để alerting / dashboard / performance monitoring
+  #
+  # Vì sao cần trong Logistics API?
+  # - Theo dõi throughput, endpoint nào chậm, service nào fail nhiều
+  # - Rất hữu ích khi benchmark hoặc soi bottleneck local
+  # =============================================
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: logistics_prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      # File config scrape target
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+      # Data metrics lưu tại đây
+      - prometheus_data:/prometheus
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Grafana - Metrics Dashboard
+  # Dùng để làm gì?
+  # - Vẽ dashboard từ dữ liệu Prometheus
+  # - Quan sát CPU, memory, request duration, throughput, errors...
+  #
+  # Vì sao cần trong dev?
+  # - Có dashboard là nhìn ra xu hướng nhanh hơn đọc số thô
+  # - Rất tiện khi test load hoặc debug performance
+  # =============================================
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: logistics_grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin_pass
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    volumes:
+      # Grafana internal storage
+      - grafana_data:/var/lib/grafana
+
+      # Provisioning datasource/dashboard từ local folder
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - logistics_net
+
+  # =============================================
+  # Jaeger - Distributed Tracing
+  # Dùng để làm gì?
+  # - Thu thập trace/span từ OpenTelemetry
+  # - Cho phép xem 1 request đi qua những bước nào, tốn thời gian ở đâu
+  #
+  # Vì sao cực kỳ hữu ích?
+  # - Khi 1 API gọi DB + Redis + RabbitMQ + HTTP downstream
+  #   thì tracing giúp thấy toàn bộ đường đi request
+  # - Biết chính xác step nào chậm, step nào fail
+  #
+  # Port:
+  # - 16686 : Jaeger UI
+  # - 4317  : OTLP gRPC
+  # - 4318  : OTLP HTTP
+  # - 5778  : config/query helper
+  # - 9411  : Zipkin-compatible ingest
+  #
+  # Lưu ý:
+  # - Dùng image Jaeger mới để tránh lỗi tag không tồn tại
+  # =============================================
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.16.0
+    container_name: logistics_jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+      - "5778:5778"
+      - "9411:9411"
+    networks:
+      - logistics_net
+
+# =============================================
+# Volumes
+# Dùng để giữ dữ liệu bền vững giữa các lần restart container
+# Nếu xóa volume thì data tương ứng cũng mất
+# =============================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  seq_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# =============================================
+# Networks
+# Mạng bridge riêng để các container trong stack nói chuyện với nhau
+# Ví dụ:
+# - app gọi postgres bằng hostname: postgres
+# - app gọi redis bằng hostname: redis
+# - app gọi rabbitmq bằng hostname: rabbitmq
+# =============================================
+networks:
+  logistics_net:
+    driver: bridge
+    name: logistics_net
