@@ -1,5 +1,6 @@
 using Logistics.Api.BuildingBlocks.Application.Abstractions.CQRS;
 using Logistics.Api.BuildingBlocks.Application.Results;
+using Logistics.Api.BuildingBlocks.Contracts;
 using Logistics.Api.BuildingBlocks.Domain.Time;
 using Logistics.Api.Pricing.Application.Services;
 using Logistics.Api.Shipments.Application.Abstractions;
@@ -17,6 +18,7 @@ internal sealed class CreateShipmentCommandHandler
     private readonly IMerchantScopeService _merchantScopeService;
     private readonly IPricingCalculator _pricingCalculator;
     private readonly IIdempotencyService _idempotencyService;
+    private readonly IOutboxMessageWriter _outboxMessageWriter;
     private readonly IClock _clock;
     private readonly ILogger<CreateShipmentCommandHandler> _logger;
 
@@ -25,6 +27,7 @@ internal sealed class CreateShipmentCommandHandler
         IMerchantScopeService merchantScopeService,
         IPricingCalculator pricingCalculator,
         IIdempotencyService idempotencyService,
+        IOutboxMessageWriter outboxMessageWriter,
         IClock clock,
         ILogger<CreateShipmentCommandHandler> logger)
     {
@@ -32,6 +35,7 @@ internal sealed class CreateShipmentCommandHandler
         _merchantScopeService = merchantScopeService;
         _pricingCalculator = pricingCalculator;
         _idempotencyService = idempotencyService;
+        _outboxMessageWriter = outboxMessageWriter;
         _clock = clock;
         _logger = logger;
     }
@@ -136,6 +140,23 @@ internal sealed class CreateShipmentCommandHandler
         try
         {
             _shipmentRepository.Add(shipment);
+            _outboxMessageWriter.Add(new ShipmentCreatedIntegrationEvent(
+                EventId: Guid.NewGuid(),
+                CorrelationId: command.CorrelationId,
+                OccurredOn: _clock.UtcNow,
+                Version: 1,
+                Payload: new ShipmentCreatedPayload(
+                    ShipmentId: shipment.Id,
+                    TrackingCode: shipment.TrackingCode,
+                    ShipmentCode: shipment.ShipmentCode,
+                    MerchantId: shipment.MerchantId,
+                    MerchantCode: shipment.MerchantCode,
+                    CurrentStatus: shipment.CurrentStatus.ToString(),
+                    ServiceType: shipment.ServiceType.ToString(),
+                    ShippingFee: shipment.ShippingFee,
+                    CodAmount: shipment.CodAmount,
+                    TotalFee: shipment.TotalFee,
+                    CreatedAt: shipment.CreatedAt)));
             await _shipmentRepository.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex) when (IsIdempotencyConflict(ex))

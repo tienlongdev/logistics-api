@@ -40,6 +40,7 @@ public sealed class ShipmentsController : ControllerBase
 
         var command = new CreateShipmentCommand(
             RequestingUserId: requestingUserId,
+            CorrelationId: TryGetCorrelationId(HttpContext),
             IdempotencyKey: idempotencyKey,
             MerchantOrderRef: request.MerchantOrderRef,
             ServiceType: request.ServiceType,
@@ -66,6 +67,17 @@ public sealed class ShipmentsController : ControllerBase
             actionName: nameof(CreateShipment),
             routeValues: new { id = result.Value.ShipmentId },
             value: result.Value);
+    }
+
+    private static Guid? TryGetCorrelationId(HttpContext httpContext)
+    {
+        var raw = httpContext.Request.Headers["X-Correlation-Id"].ToString();
+        if (Guid.TryParse(raw, out var correlationId))
+            return correlationId;
+
+        return Guid.TryParse(httpContext.TraceIdentifier, out correlationId)
+            ? correlationId
+            : null;
     }
 }
 

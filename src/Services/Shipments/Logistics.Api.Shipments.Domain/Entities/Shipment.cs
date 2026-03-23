@@ -180,7 +180,8 @@ public sealed class Shipment : AggregateRoot<Guid>
         string? hubCode,
         string? location,
         string source,
-        IClock clock)
+        IClock clock,
+        DateTimeOffset? occurredAt = null)
     {
         if (!ShipmentStateMachine.CanTransition(CurrentStatus, toStatus))
             return false;
@@ -216,7 +217,7 @@ public sealed class Shipment : AggregateRoot<Guid>
             operatorId: operatorId,
             operatorName: operatorName,
             source: source,
-            occurredAt: clock.UtcNow));
+            occurredAt: occurredAt ?? clock.UtcNow));
 
         return true;
     }

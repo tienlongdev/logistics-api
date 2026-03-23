@@ -3,6 +3,7 @@ using Logistics.Api.Shipments.Application;
 using Logistics.Api.Shipments.Application.Abstractions;
 using Logistics.Api.Shipments.Domain.Repositories;
 using Logistics.Api.Shipments.Infrastructure.Idempotency;
+using Logistics.Api.Shipments.Infrastructure.Messaging;
 using Logistics.Api.Shipments.Infrastructure.Persistence;
 using Logistics.Api.Shipments.Infrastructure.Repositories;
 using Logistics.Api.Shipments.Infrastructure.Services;
@@ -36,6 +37,7 @@ public static class ShipmentsInfrastructureModule
 
         // Repositories
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
+        services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
 
         // Cross-module merchant scope resolver
         services.AddScoped<IMerchantScopeService, MerchantScopeService>();

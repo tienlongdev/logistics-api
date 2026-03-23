@@ -1,3 +1,4 @@
+using Logistics.Api.BuildingBlocks.Infrastructure.Messaging;
 using Logistics.Api.Shipments.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ public sealed class ShipmentsDbContext : DbContext
 {
     public ShipmentsDbContext(DbContextOptions<ShipmentsDbContext> options) : base(options) { }
 
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<TrackingEvent> TrackingEvents => Set<TrackingEvent>();
 
