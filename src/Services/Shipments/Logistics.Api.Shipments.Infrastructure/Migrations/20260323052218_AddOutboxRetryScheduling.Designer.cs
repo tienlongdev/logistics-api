@@ -3,6 +3,7 @@ using System;
 using Logistics.Api.Shipments.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Logistics.Api.Shipments.Infrastructure.Migrations
 {
     [DbContext(typeof(ShipmentsDbContext))]
-    partial class ShipmentsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323052218_AddOutboxRetryScheduling")]
+    partial class AddOutboxRetryScheduling
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

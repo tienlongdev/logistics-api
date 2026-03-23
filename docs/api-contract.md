@@ -235,8 +235,15 @@ Request
 ## 5. Search
 
 ### GET `/api/v1/search/shipments`
+Auth: JWT required
+
+Behavior:
+- Search is served from Elasticsearch, not PostgreSQL.
+- PostgreSQL remains the source of truth.
+- Shipment create/status events trigger reindexing into Elasticsearch.
+- For merchant users, `merchantCode` is forced to the caller's merchant scope.
+
 Query params:
-- `q`
 - `trackingCode`
 - `shipmentCode`
 - `merchantCode`
@@ -245,3 +252,57 @@ Query params:
 - `fromDate`, `toDate`
 - `page`, `pageSize`
 - `sort` (e.g. `createdAt:desc`)
+
+Supported sort fields:
+- `createdAt`
+- `updatedAt`
+- `trackingCode`
+- `shipmentCode`
+- `merchantCode`
+- `receiverPhone`
+- `status`
+
+Response
+```json
+{
+  "total": 2,
+  "page": 1,
+  "pageSize": 20,
+  "sort": "createdAt:desc",
+  "items": [
+    {
+      "shipmentId": "0f8fad5b-d9cb-469f-a165-70867728950e",
+      "trackingCode": "LGA2603000001",
+      "shipmentCode": "SHIP-20260323-0001",
+      "merchantCode": "MERCHANT-ACME",
+      "receiverPhone": "0909123456",
+      "receiverName": "Tran Thi B",
+      "senderName": "Nguyen Van A",
+      "status": "InTransit",
+      "serviceType": "Express",
+      "codAmount": 150000,
+      "shippingFee": 32000,
+      "totalFee": 32000,
+      "createdAt": "2026-03-23T10:00:00Z",
+      "updatedAt": "2026-03-23T11:05:00Z"
+    }
+  ]
+}
+```
+
+Example
+```http
+GET /api/v1/search/shipments?merchantCode=MERCHANT-ACME&status=InTransit&fromDate=2026-03-01T00:00:00Z&toDate=2026-03-31T23:59:59Z&page=1&pageSize=20&sort=createdAt:desc
+Authorization: Bearer <access-token>
+```
+
+### Local Elasticsearch index strategy
+- Worker startup ensures the shipments index exists.
+- Worker startup can backfill the shipments index from PostgreSQL for local development.
+- Default local index name: `logistics-shipments-v1`.
+- To rebuild locally, delete the index and restart the worker.
+
+Example local rebuild command:
+```bash
+curl -X DELETE http://localhost:9200/logistics-shipments-v1
+```

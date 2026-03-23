@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\Services\Identity\Logistics.Api.Identity.Infrastructure\Logistics.Api.Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Services\Merchants\Logistics.Api.Merchants.Infrastructure\Logistics.Api.Merchants.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Services\Pricing\Logistics.Api.Pricing.Infrastructure\Logistics.Api.Pricing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Services\Search\Logistics.Api.Search.Infrastructure\Logistics.Api.Search.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Services\Shipments\Logistics.Api.Shipments.Infrastructure\Logistics.Api.Shipments.Infrastructure.csproj" />
   </ItemGroup>
 

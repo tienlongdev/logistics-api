@@ -9,6 +9,13 @@
   <ItemGroup>
     <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.3.3" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Logistics.Api.Search.Application\Logistics.Api.Search.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Contracts\Logistics.Api.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shipments\Logistics.Api.Shipments.Infrastructure\Logistics.Api.Shipments.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

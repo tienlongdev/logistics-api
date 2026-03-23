@@ -16,6 +16,7 @@ public sealed class OutboxMessage
     public string Payload { get; set; } = default!;
 
     public DateTimeOffset OccurredOn { get; set; }
+    public DateTimeOffset? NextRetryAt { get; set; }
 
     public DateTimeOffset? ProcessedOn { get; set; }
     public string? Error { get; set; }
