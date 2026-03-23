@@ -9,6 +9,7 @@ using Logistics.Api.Identity.Domain.Entities;
 using Logistics.Api.Identity.Infrastructure;
 using Logistics.Api.Identity.Infrastructure.Services;
 using Logistics.Api.Merchants.Infrastructure;
+using Logistics.Api.Notifications.Infrastructure;
 using Logistics.Api.Pricing.Infrastructure;
 using Logistics.Api.Shipments.Infrastructure;
 using MediatR;
@@ -76,6 +77,7 @@ else
 // ── Modules ──────────────────────────────────────────────────────────────────
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddMerchantsModule(builder.Configuration);
+builder.Services.AddNotificationsModule(builder.Configuration);
 builder.Services.AddPricingModule(builder.Configuration);
 builder.Services.AddShipmentsModule(builder.Configuration);
 
