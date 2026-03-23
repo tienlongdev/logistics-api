@@ -8,6 +8,9 @@ using Logistics.Api.Host.Middleware;
 using Logistics.Api.Identity.Domain.Entities;
 using Logistics.Api.Identity.Infrastructure;
 using Logistics.Api.Identity.Infrastructure.Services;
+using Logistics.Api.Merchants.Infrastructure;
+using Logistics.Api.Pricing.Infrastructure;
+using Logistics.Api.Shipments.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -56,9 +59,25 @@ builder.Services.AddInfrastructureHealthChecks(builder.Configuration);
 
 // OpenTelemetry
 builder.Services.AddOpenTelemetryTracing(otelOptions);
-
+// ── Redis distributed cache (used by idempotency store + future caching) ─────
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    builder.Services.AddStackExchangeRedisCache(opts =>
+    {
+        opts.Configuration = redisConnectionString;
+        opts.InstanceName = "logistics:";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
 // ── Modules ──────────────────────────────────────────────────────────────────
 builder.Services.AddIdentityModule(builder.Configuration);
+builder.Services.AddMerchantsModule(builder.Configuration);
+builder.Services.AddPricingModule(builder.Configuration);
+builder.Services.AddShipmentsModule(builder.Configuration);
 
 // ── MediatR pipeline behaviors (global, registered after all module handlers) ─
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationPipelineBehavior<,>));

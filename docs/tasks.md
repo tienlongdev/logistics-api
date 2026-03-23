@@ -110,15 +110,17 @@
 
 ## D. Pricing
 
-### D1. PricingRule model + fee calculator (P0)
-- [ ] DB table `pricing.pricing_rules` + migration
-- [ ] Implement calculator:
-  - zone type (same province / national)
-  - weight bracket
-  - COD fee percent
-  - service type
-- Acceptance:
-  - CreateShipment returns computed fee fields
+### D1. PricingRule model + fee calculator (P0) ✅
+- [x] DB table `pricing.pricing_rules` + migration (`InitialPricingSchema`)
+- [x] Implement calculator:
+  - zone type (same province / national) via `ZoneResolver`
+  - weight bracket (`MinWeightGram` / `MaxWeightGram`)
+  - COD fee percent (`CodFeePercent`)
+  - service type (`ServiceType` enum)
+- [x] `IPricingCalculator` / `PricingCalculator` in Application layer
+- [x] Unit tests: `PricingRuleTests`, `ZoneResolverTests`, `PricingCalculatorTests` (37 passing)
+- [x] Host: `AddPricingModule` registered
+- Note: CreateShipment integration (fee fields on response) is part of task E2
 
 ---
 

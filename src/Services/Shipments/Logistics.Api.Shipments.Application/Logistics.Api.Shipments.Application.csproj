@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Logistics.Api.Shipments.Domain\Logistics.Api.Shipments.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Application\Logistics.Api.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\Pricing\Logistics.Api.Pricing.Application\Logistics.Api.Pricing.Application.csproj" />
+  </ItemGroup>
+
 </Project>

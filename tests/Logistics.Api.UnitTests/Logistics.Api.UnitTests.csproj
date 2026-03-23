@@ -21,4 +21,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Pricing\Logistics.Api.Pricing.Application\Logistics.Api.Pricing.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Pricing\Logistics.Api.Pricing.Domain\Logistics.Api.Pricing.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Shipments\Logistics.Api.Shipments.Domain\Logistics.Api.Shipments.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Shipments\Logistics.Api.Shipments.Application\Logistics.Api.Shipments.Application.csproj" />
+  </ItemGroup>
+
 </Project>
