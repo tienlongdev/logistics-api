@@ -6,26 +6,3 @@ services:
   postgres:
     environment:
       POSTGRES_DB: logistics_db_dev
-
-  # Chạy Web API Host trong local stack
-  host:
-    build:
-      context: .
-      dockerfile: src/Host/Logistics.Api.Host/Dockerfile
-    container_name: logistics_host
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
-    ports:
-      - "5000:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - logistics_net
