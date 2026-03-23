@@ -12,6 +12,7 @@ public sealed class ShipmentsDbContext : DbContext
 {
     public ShipmentsDbContext(DbContextOptions<ShipmentsDbContext> options) : base(options) { }
 
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<TrackingEvent> TrackingEvents => Set<TrackingEvent>();

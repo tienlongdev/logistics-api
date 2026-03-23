@@ -10,6 +10,9 @@
   <Folder Name="/src/Host/">
     <Project Path="src/Host/Logistics.Api.Host/Logistics.Api.Host.csproj" />
   </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/Logistics.Api.Messaging.Worker/Logistics.Api.Messaging.Worker.csproj" />
+  </Folder>
   <Folder Name="/src/Services/" />
   <Folder Name="/src/Services/Hubs/">
     <Project Path="src/Services/Hubs/Logistics.Api.Hubs.Application/Logistics.Api.Hubs.Application.csproj" />
