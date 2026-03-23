@@ -3,19 +3,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Filter, Search } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { PageLoadingState } from "@/components/feedback/page-loading-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { searchShipments } from "@/lib/api/client";
-import { shipmentStatusOptions, shipmentStatusTone } from "@/lib/constants/status";
+import { shipmentStatusOptions } from "@/lib/constants/status";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { formatDate } from "@/lib/utils";
 import { searchFiltersSchema, type SearchFiltersSchema } from "@/lib/validation/search";
@@ -34,16 +35,21 @@ const defaultFilters: SearchFiltersSchema = {
 export default function SearchPage() {
   const accessToken = useAuthStore((state) => state.accessToken ?? undefined);
   const [filters, setFilters] = useState<SearchFiltersSchema>(defaultFilters);
+  const [page, setPage] = useState(1);
+  const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
   const form = useForm<SearchFiltersSchema>({
     resolver: zodResolver(searchFiltersSchema),
     defaultValues: defaultFilters,
   });
 
   const query = useQuery({
-    queryKey: ["search-shipments", filters, accessToken],
-    queryFn: () => searchShipments({ ...filters, page: 1, pageSize: 20 }, accessToken),
+    enabled: Boolean(accessToken),
+    queryKey: ["search-shipments", filters, page, accessToken],
+    queryFn: () => searchShipments({ ...filters, page, pageSize: 20 }, accessToken),
     placeholderData: keepPreviousData,
   });
+  const selectedItem = query.data?.items.find((item) => item.shipmentId === selectedShipmentId) ?? query.data?.items[0] ?? null;
+  const totalPages = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.pageSize)) : 1;
 
   return (
     <div className="grid gap-6">
@@ -61,7 +67,11 @@ export default function SearchPage() {
           <CardDescription>Form dung react-hook-form + zod de validate va serialise query params.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={form.handleSubmit((values) => setFilters(values))}>
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={form.handleSubmit((values) => {
+            setPage(1);
+            setSelectedShipmentId(null);
+            setFilters(values);
+          })}>
             <div className="space-y-2">
               <Label htmlFor="search-tracking">Tracking code</Label>
               <Input id="search-tracking" {...form.register("trackingCode")} placeholder="LGA..." />
@@ -94,6 +104,7 @@ export default function SearchPage() {
             <div className="space-y-2">
               <Label htmlFor="search-to">To date</Label>
               <Input id="search-to" type="date" {...form.register("toDate")} />
+              {form.formState.errors.toDate ? <p className="text-sm text-destructive">{form.formState.errors.toDate.message}</p> : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="search-sort">Sort</Label>
@@ -111,6 +122,8 @@ export default function SearchPage() {
               <Button type="button" variant="outline" onClick={() => {
                 form.reset(defaultFilters);
                 setFilters(defaultFilters);
+                setPage(1);
+                setSelectedShipmentId(null);
               }}>
                 Reset
               </Button>
@@ -130,28 +143,121 @@ export default function SearchPage() {
       ) : null}
 
       {query.isSuccess && query.data.items.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Search results</CardTitle>
-            <CardDescription>{query.data.total.toLocaleString("vi-VN")} ket qua tu Elasticsearch read model.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            {query.data.items.map((item) => (
-              <div key={item.shipmentId} className="rounded-2xl border border-border/70 bg-background/70 p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium">{item.trackingCode}</p>
-                      <Badge variant={shipmentStatusTone[item.status]}>{item.status}</Badge>
+        <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+          <Card>
+            <CardHeader>
+              <CardTitle>Search results</CardTitle>
+              <CardDescription>{query.data.total.toLocaleString("vi-VN")} ket qua tu Elasticsearch read model.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {query.data.items.map((item) => (
+                <button
+                  key={item.shipmentId}
+                  type="button"
+                  onClick={() => setSelectedShipmentId(item.shipmentId)}
+                  className="rounded-2xl border border-border/70 bg-background/70 p-4 text-left transition-colors hover:border-primary/50"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{item.trackingCode}</p>
+                        <StatusBadge status={item.status} />
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.shipmentCode} · {item.receiverName} · {item.receiverPhone}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{item.shipmentCode} · {item.receiverName} · {item.receiverPhone}</p>
+                    <div className="text-sm text-muted-foreground">Updated {formatDate(item.updatedAt)}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground">Updated {formatDate(item.updatedAt)}</div>
+                </button>
+              ))}
+              <div className="flex flex-col gap-3 border-t border-border/70 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-muted-foreground">Trang {page} / {totalPages}</div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1 || query.isFetching}>Trang truoc</Button>
+                  <Button variant="outline" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page >= totalPages || query.isFetching}>Trang sau</Button>
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Preview</CardTitle>
+              <CardDescription>Xem nhanh shipment da chon truoc khi mo detail page.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+              {selectedItem ? (
+                <>
+                  <div className="space-y-2 rounded-2xl bg-accent/60 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-lg font-semibold">{selectedItem.trackingCode}</p>
+                      <StatusBadge status={selectedItem.status} />
+                    </div>
+                    <p className="text-muted-foreground">{selectedItem.shipmentCode}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Receiver</p>
+                      <p className="mt-1 font-medium">{selectedItem.receiverName}</p>
+                      <p className="text-muted-foreground">{selectedItem.receiverPhone}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Sender</p>
+                      <p className="mt-1 font-medium">{selectedItem.senderName}</p>
+                      <p className="text-muted-foreground">{selectedItem.merchantCode}</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Created</p>
+                      <p className="mt-1 font-medium">{formatDate(selectedItem.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Updated</p>
+                      <p className="mt-1 font-medium">{formatDate(selectedItem.updatedAt)}</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">COD</p>
+                      <p className="mt-1 font-medium">{selectedItem.codAmount.toLocaleString("vi-VN")}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Shipping fee</p>
+                      <p className="mt-1 font-medium">{selectedItem.shippingFee.toLocaleString("vi-VN")}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Total fee</p>
+                      <p className="mt-1 font-medium">{selectedItem.totalFee.toLocaleString("vi-VN")}</p>
+                    </div>
+                  </div>
+                  <Button asChild className="w-full">
+                    <Link
+                      href={{
+                        pathname: `/shipments/${selectedItem.shipmentId}`,
+                        query: {
+                          codAmount: String(selectedItem.codAmount),
+                          createdAt: selectedItem.createdAt,
+                          receiverName: selectedItem.receiverName,
+                          receiverPhone: selectedItem.receiverPhone,
+                          senderName: selectedItem.senderName,
+                          shipmentCode: selectedItem.shipmentCode,
+                          shippingFee: String(selectedItem.shippingFee),
+                          status: selectedItem.status,
+                          totalFee: String(selectedItem.totalFee),
+                          trackingCode: selectedItem.trackingCode,
+                        },
+                      }}
+                    >
+                      Mo shipment detail
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <EmptyState icon={Search} title="Chua chon shipment" description="Chon mot ket qua o cot ben trai de xem preview chi tiet." />
+              )}
+            </CardContent>
+          </Card>
+        </div>
       ) : null}
     </div>
   );

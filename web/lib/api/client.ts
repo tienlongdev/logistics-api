@@ -1,9 +1,6 @@
 import { apiEndpoints } from "@/lib/api/endpoints";
-import {
-    mockShipmentsResponse,
-    mockTrackingSummary,
-    mockTrackingTimeline,
-} from "@/lib/mock/shipments";
+import { shipmentStatusValueMap } from "@/lib/constants/status";
+import { useAuthStore } from "@/lib/store/auth-store";
 import {
     type DashboardSnapshot,
     type LoginRequest,
@@ -13,10 +10,14 @@ import {
     type SearchShipmentsResponse,
     type TrackingSummary,
     type TrackingTimelineResponse,
+    type TransitionShipmentStatusRequest,
+    type TransitionShipmentStatusResponse,
 } from "@/lib/types/api";
+import { toast } from "sonner";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api/v1";
-const ENABLE_MOCK_FALLBACK = process.env.NEXT_PUBLIC_ENABLE_MOCK_FALLBACK !== "false";
+const DEFAULT_API_BASE_URL = "http://localhost:5080";
+
+let refreshPromise: Promise<string | null> | null = null;
 
 export class ApiError extends Error {
   status: number;
@@ -30,8 +31,26 @@ export class ApiError extends Error {
   }
 }
 
-function buildUrl(path: string, query?: Record<string, string | number | undefined>) {
-  const url = new URL(path, API_BASE_URL.endsWith("/") ? API_BASE_URL : `${API_BASE_URL}/`);
+type QueryValue = boolean | number | string | undefined;
+
+interface RequestOptions extends Omit<RequestInit, "body"> {
+  auth?: boolean;
+  body?: BodyInit | object;
+  query?: Record<string, QueryValue>;
+  retryOnUnauthorized?: boolean;
+  suppressToast?: boolean;
+  token?: string | null;
+}
+
+function getApiBaseUrl() {
+  const configured = (process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL).replace(/\/+$/, "");
+
+  return configured.endsWith("/api/v1") ? configured : `${configured}/api/v1`;
+}
+
+function buildUrl(path: string, query?: Record<string, QueryValue>) {
+  const normalizedPath = path.replace(/^\//, "");
+  const url = new URL(normalizedPath, `${getApiBaseUrl()}/`);
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
@@ -44,22 +63,41 @@ function buildUrl(path: string, query?: Record<string, string | number | undefin
   return url.toString();
 }
 
-async function request<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
-  const response = await fetch(path.startsWith("http") ? path : buildUrl(path), {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const maybeProblem = (await response.json().catch(() => undefined)) as ProblemDetails | undefined;
-    throw new ApiError(maybeProblem?.detail ?? maybeProblem?.title ?? "Request failed", response.status, maybeProblem);
+function createCorrelationId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
   }
 
+  return `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function buildMessage(problem?: ProblemDetails, fallback = "Request failed") {
+  const validationErrors = problem?.errors
+    ? Object.values(problem.errors)
+        .flat()
+        .filter(Boolean)
+        .join(" ")
+    : "";
+
+  return validationErrors || problem?.detail || problem?.title || fallback;
+}
+
+function normalizeError(error: unknown) {
+  if (error instanceof ApiError) {
+    return error;
+  }
+
+  if (error instanceof TypeError) {
+    return new ApiError(
+      "Backend not available. Start the API on http://localhost:5080 and retry.",
+      503,
+    );
+  }
+
+  return new ApiError("Unexpected request failure.", 500);
+}
+
+async function parseResponse<T>(response: Response) {
   if (response.status === 204) {
     return undefined as T;
   }
@@ -67,73 +105,185 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
   return (await response.json()) as T;
 }
 
-function withMockFallback<T>(fetcher: () => Promise<T>, fallback: T) {
-  return fetcher().catch((error) => {
-    if (ENABLE_MOCK_FALLBACK && error instanceof TypeError) {
-      return fallback;
+async function refreshAccessToken() {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    const { clearSession, refreshToken, updateTokens } = useAuthStore.getState();
+
+    if (!refreshToken) {
+      return null;
     }
 
-    throw error;
-  });
+    try {
+      const response = await request<LoginResponse>(apiEndpoints.refresh, {
+        auth: false,
+        body: { refreshToken },
+        method: "POST",
+        retryOnUnauthorized: false,
+        suppressToast: true,
+      });
+
+      updateTokens(response);
+      return response.accessToken;
+    } catch {
+      clearSession();
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const {
+    auth = true,
+    body,
+    headers,
+    query,
+    retryOnUnauthorized = true,
+    suppressToast = false,
+    token,
+    ...init
+  } = options;
+
+  try {
+    const accessToken = token !== undefined ? token : auth ? useAuthStore.getState().accessToken : null;
+    const response = await fetch(buildUrl(path, query), {
+      ...init,
+      body:
+        body === undefined || body instanceof FormData || typeof body === "string"
+          ? body
+          : JSON.stringify(body),
+      cache: "no-store",
+      headers: {
+        ...(body === undefined || body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        "X-Correlation-Id": createCorrelationId(),
+        ...(headers ?? {}),
+      },
+    });
+
+    if (response.status === 401 && auth && retryOnUnauthorized && !path.startsWith("auth/")) {
+      const refreshedAccessToken = await refreshAccessToken();
+
+      if (refreshedAccessToken) {
+        return request<T>(path, {
+          ...options,
+          retryOnUnauthorized: false,
+          token: refreshedAccessToken,
+        });
+      }
+    }
+
+    if (!response.ok) {
+      const maybeProblem = (await response.json().catch(() => undefined)) as ProblemDetails | undefined;
+      throw new ApiError(buildMessage(maybeProblem), response.status, maybeProblem);
+    }
+
+    return parseResponse<T>(response);
+  } catch (error) {
+    const normalizedError = normalizeError(error);
+
+    if (!suppressToast) {
+      toast.error(normalizedError.message);
+    }
+
+    throw normalizedError;
+  }
+}
+
+function toStartOfDay(value?: string) {
+  return value ? `${value}T00:00:00.000Z` : undefined;
+}
+
+function toEndOfDay(value?: string) {
+  return value ? `${value}T23:59:59.999Z` : undefined;
 }
 
 export async function login(payload: LoginRequest) {
-  try {
-    return await request<LoginResponse>(apiEndpoints.login, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  } catch (error) {
-    if (ENABLE_MOCK_FALLBACK && error instanceof TypeError) {
-      return {
-        accessToken: "demo-access-token",
-        refreshToken: "demo-refresh-token",
-        expiresIn: 3600,
-      } satisfies LoginResponse;
-    }
+  return request<LoginResponse>(apiEndpoints.login, {
+    auth: false,
+    body: payload,
+    method: "POST",
+    retryOnUnauthorized: false,
+  });
+}
 
-    throw error;
+export async function logout() {
+  const { clearSession, refreshToken } = useAuthStore.getState();
+
+  try {
+    if (refreshToken) {
+      await request<void>(apiEndpoints.logout, {
+        auth: false,
+        body: { refreshToken },
+        method: "POST",
+        retryOnUnauthorized: false,
+        suppressToast: true,
+      });
+    }
+  } finally {
+    clearSession();
   }
+}
+
+export async function restoreSession() {
+  const restoredToken = await refreshAccessToken();
+  return Boolean(restoredToken);
 }
 
 export function searchShipments(filters: SearchShipmentFilters, token?: string) {
-  if (token === "demo-access-token") {
-    return Promise.resolve(mockShipmentsResponse);
-  }
-
-  const query = Object.fromEntries(
-    Object.entries({
-      trackingCode: filters.trackingCode,
-      shipmentCode: filters.shipmentCode,
-      merchantCode: filters.merchantCode,
-      receiverPhone: filters.receiverPhone,
-      status: filters.status,
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
-      page: filters.page ?? 1,
-      pageSize: filters.pageSize ?? 10,
-      sort: filters.sort ?? "updatedAt:desc",
-    }).filter(([, value]) => value !== undefined && value !== ""),
-  );
-
-  return withMockFallback(
-    () => request<SearchShipmentsResponse>(buildUrl(apiEndpoints.searchShipments, query), undefined, token),
-    mockShipmentsResponse,
-  );
+  return request<SearchShipmentsResponse>(apiEndpoints.searchShipments, {
+    query: {
+      TrackingCode: filters.trackingCode,
+      ShipmentCode: filters.shipmentCode,
+      MerchantCode: filters.merchantCode,
+      ReceiverPhone: filters.receiverPhone,
+      Status: filters.status,
+      FromDate: toStartOfDay(filters.fromDate),
+      ToDate: toEndOfDay(filters.toDate),
+      Page: filters.page ?? 1,
+      PageSize: filters.pageSize ?? 10,
+      Sort: filters.sort ?? "updatedAt:desc",
+    },
+    token,
+  });
 }
 
 export function getTrackingSummary(trackingCode: string) {
-  return withMockFallback(
-    () => request<TrackingSummary>(apiEndpoints.trackingSummary(trackingCode)),
-    mockTrackingSummary,
-  );
+  return request<TrackingSummary>(apiEndpoints.trackingSummary(trackingCode), {
+    auth: false,
+  });
 }
 
 export function getTrackingTimeline(trackingCode: string) {
-  return withMockFallback(
-    () => request<TrackingTimelineResponse>(apiEndpoints.trackingTimeline(trackingCode)),
-    mockTrackingTimeline,
-  );
+  return request<TrackingTimelineResponse>(apiEndpoints.trackingTimeline(trackingCode), {
+    auth: false,
+  });
+}
+
+export function transitionShipmentStatus(
+  shipmentId: string,
+  payload: TransitionShipmentStatusRequest,
+  token?: string,
+) {
+  return request<TransitionShipmentStatusResponse>(apiEndpoints.shipmentStatusTransitions(shipmentId), {
+    body: {
+      toStatus: shipmentStatusValueMap[payload.toStatus],
+      hubId: payload.hubId ?? null,
+      hubCode: payload.hubCode ?? null,
+      location: payload.location ?? null,
+      note: payload.note ?? null,
+      occurredAt: payload.occurredAt ?? null,
+    },
+    method: "POST",
+    token,
+  });
 }
 
 export async function getDashboardSnapshot(token?: string): Promise<DashboardSnapshot> {

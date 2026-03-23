@@ -5,7 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,19 +28,14 @@ export function LoginForm() {
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: (response, values) => {
-      const mode = response.accessToken === "demo-access-token" ? "demo" : "api";
       setSession({
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
         expiresIn: response.expiresIn,
         email: values.email,
-        mode,
+        mode: "api",
       });
-      toast.success(mode === "demo" ? "Da vao placeholder session" : "Dang nhap thanh cong");
-      router.push("/dashboard");
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Dang nhap that bai");
+      router.push("/shipments");
     },
   });
 
@@ -53,7 +47,7 @@ export function LoginForm() {
         </div>
         <CardTitle>Dang nhap vao Logistics Web</CardTitle>
         <CardDescription>
-          Form nay goi contract dang nhap theo `POST /api/v1/auth/login`. Neu backend chua chay, app tu dong vao placeholder session de preview UI.
+          Form nay goi thang `POST /api/v1/auth/login`. Access token duoc giu trong memory, refresh token duoc luu tam trong session storage vi backend chua set httpOnly cookie.
         </CardDescription>
       </CardHeader>
       <CardContent>

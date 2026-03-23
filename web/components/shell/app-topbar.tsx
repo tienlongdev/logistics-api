@@ -1,11 +1,14 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { Menu, SearchSlash } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { logout } from "@/lib/api/client";
 import { routeTitles } from "@/lib/constants/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
 
@@ -16,11 +19,20 @@ interface AppTopbarProps {
 export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { clearSession, email, mode } = useAuthStore((state) => ({
-    clearSession: state.clearSession,
+  const { accessToken, email, mode, roles } = useAuthStore((state) => ({
+    accessToken: state.accessToken,
     email: state.email,
     mode: state.mode,
+    roles: state.roles,
   }));
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSettled: () => {
+      router.push("/login");
+    },
+  });
+
+  const title = pathname.startsWith("/shipments/") ? "Shipment detail" : routeTitles[pathname] ?? "Operations";
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur">
@@ -30,10 +42,13 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
         </Button>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-xl font-semibold">{routeTitles[pathname] ?? "Operations"}</h1>
-            {mode ? <Badge variant={mode === "demo" ? "secondary" : "success"}>{mode === "demo" ? "Demo auth" : "API auth"}</Badge> : null}
+            <h1 className="truncate text-xl font-semibold">{title}</h1>
+            {mode ? <Badge variant="success">API auth</Badge> : null}
+            {roles.map((role) => (
+              <Badge key={role} variant="outline">{role}</Badge>
+            ))}
           </div>
-          <p className="text-sm text-muted-foreground">Neutral interface, optimistic shell, and graceful fallback for incomplete backend routes.</p>
+          <p className="text-sm text-muted-foreground">Typed client, correlation id header, va fallback ro rang cho shipment APIs chua co.</p>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
@@ -41,15 +56,15 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
             <span className="max-w-40 truncate">{email ?? "No session"}</span>
           </div>
           <ThemeToggle />
-          <Button
-            variant="outline"
-            onClick={() => {
-              clearSession();
-              router.push("/login");
-            }}
-          >
-            Dang xuat
-          </Button>
+          {accessToken ? (
+            <Button variant="outline" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()}>
+              Dang xuat
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link href="/login">Dang nhap</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

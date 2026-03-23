@@ -50,7 +50,7 @@ export default function DashboardPage() {
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Overview</p>
           <h2 className="text-3xl font-semibold">Operational pulse</h2>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">Dashboard hien lay du lieu tu search endpoint de khong can them backend moi. Neu search API chua san sang, app se hien mock fallback de kiem thu shell va states.</p>
+        <p className="max-w-xl text-sm text-muted-foreground">Dashboard doc `GET /api/v1/search/shipments` lam read model tam thoi cho den khi shipment query API duoc implement.</p>
       </div>
 
       {query.isLoading ? <PageLoadingState /> : null}
