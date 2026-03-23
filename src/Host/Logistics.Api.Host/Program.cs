@@ -11,6 +11,7 @@ using Logistics.Api.Identity.Infrastructure.Services;
 using Logistics.Api.Merchants.Infrastructure;
 using Logistics.Api.Notifications.Infrastructure;
 using Logistics.Api.Pricing.Infrastructure;
+using Logistics.Api.Search.Infrastructure;
 using Logistics.Api.Shipments.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -79,6 +80,7 @@ builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddMerchantsModule(builder.Configuration);
 builder.Services.AddNotificationsModule(builder.Configuration);
 builder.Services.AddPricingModule(builder.Configuration);
+builder.Services.AddSearchModule(builder.Configuration);
 builder.Services.AddShipmentsModule(builder.Configuration);
 
 // ── MediatR pipeline behaviors (global, registered after all module handlers) ─

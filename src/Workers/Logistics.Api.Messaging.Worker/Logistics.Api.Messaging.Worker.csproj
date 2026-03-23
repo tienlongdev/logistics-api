@@ -22,7 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Contracts\Logistics.Api.BuildingBlocks.Contracts.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Infrastructure\Logistics.Api.BuildingBlocks.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Services\Notifications\Logistics.Api.Notifications.Infrastructure\Logistics.Api.Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Services\Search\Logistics.Api.Search.Infrastructure\Logistics.Api.Search.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Services\Shipments\Logistics.Api.Shipments.Infrastructure\Logistics.Api.Shipments.Infrastructure.csproj" />
   </ItemGroup>
 

@@ -15,9 +15,7 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
     {
         [typeof(ShipmentCreatedIntegrationEvent).FullName!] = typeof(ShipmentCreatedIntegrationEvent),
         [typeof(ShipmentStatusChangedIntegrationEvent).FullName!] = typeof(ShipmentStatusChangedIntegrationEvent),
-        [typeof(ShipmentAssignedToHubIntegrationEvent).FullName!] = typeof(ShipmentAssignedToHubIntegrationEvent),
-        [typeof(WebhookDeliveryRequestedIntegrationEvent).FullName!] = typeof(WebhookDeliveryRequestedIntegrationEvent),
-        [typeof(WebhookDeliveryRetriedIntegrationEvent).FullName!] = typeof(WebhookDeliveryRetriedIntegrationEvent)
+        [typeof(ShipmentAssignedToHubIntegrationEvent).FullName!] = typeof(ShipmentAssignedToHubIntegrationEvent)
     };
 
     private readonly IServiceScopeFactory _scopeFactory;
@@ -72,7 +70,7 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
             .ToListAsync(cancellationToken);
 
         foreach (var message in messages)
-            await PublishAsync(message, dbContext, cancellationToken);
+            await PublishAsync(message, cancellationToken);
 
         if (messages.Count > 0)
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -80,7 +78,7 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
         return messages.Count;
     }
 
-    private async Task PublishAsync(OutboxMessage message, ShipmentsDbContext dbContext, CancellationToken cancellationToken)
+    private async Task PublishAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
         if (!EventTypes.TryGetValue(message.Type, out var eventType))
         {
