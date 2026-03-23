@@ -13,6 +13,14 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="10.0.5" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Logistics.Api.Notifications.Application\Logistics.Api.Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Contracts\Logistics.Api.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Infrastructure\Logistics.Api.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shipments\Logistics.Api.Shipments.Infrastructure\Logistics.Api.Shipments.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

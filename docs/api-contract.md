@@ -217,18 +217,131 @@ Notes:
 
 ## 4. Webhooks
 
+Auth: merchant JWT required for all subscription management endpoints.
+
+Supported events:
+- `ShipmentCreated`
+- `ShipmentStatusChanged`
+
+### GET `/api/v1/webhooks/subscriptions`
+Response
+```json
+[
+  {
+    "id": "2d3f0ffd-1084-409a-a65e-45499ef7d5c0",
+    "callbackUrl": "https://merchant.example.com/webhooks/logistics",
+    "events": ["ShipmentStatusChanged", "ShipmentCreated"],
+    "isActive": true,
+    "createdAt": "2026-03-23T10:00:00Z",
+    "updatedAt": "2026-03-23T10:00:00Z"
+  }
+]
+```
+
+### GET `/api/v1/webhooks/subscriptions/{id}`
+Response
+```json
+{
+  "id": "2d3f0ffd-1084-409a-a65e-45499ef7d5c0",
+  "callbackUrl": "https://merchant.example.com/webhooks/logistics",
+  "events": ["ShipmentStatusChanged", "ShipmentCreated"],
+  "isActive": true,
+  "createdAt": "2026-03-23T10:00:00Z",
+  "updatedAt": "2026-03-23T10:00:00Z"
+}
+```
+
 ### POST `/api/v1/webhooks/subscriptions`
 Request
 ```json
 {
-  "callbackUrl": "https://merchant.com/webhook",
+  "callbackUrl": "https://merchant.example.com/webhooks/logistics",
   "events": ["ShipmentStatusChanged", "ShipmentCreated"]
+}
+```
+
+Response `201 Created`
+```json
+{
+  "id": "2d3f0ffd-1084-409a-a65e-45499ef7d5c0",
+  "callbackUrl": "https://merchant.example.com/webhooks/logistics",
+  "events": ["ShipmentStatusChanged", "ShipmentCreated"],
+  "isActive": true,
+  "signingSecret": "9c98a0b0cf0b97f5905f2c85b665a0fd9c28c3ea908f7c12a5f53b85043d4f83",
+  "createdAt": "2026-03-23T10:00:00Z",
+  "updatedAt": "2026-03-23T10:00:00Z"
+}
+```
+
+Notes:
+- `callbackUrl` must be HTTPS in normal environments.
+- HTTP is accepted only for local development targets such as `http://localhost:3000/webhooks`.
+- `signingSecret` is returned only once on creation.
+
+### PUT `/api/v1/webhooks/subscriptions/{id}`
+Request
+```json
+{
+  "callbackUrl": "https://merchant.example.com/webhooks/logistics-v2",
+  "events": ["ShipmentStatusChanged"],
+  "isActive": true
+}
+```
+
+Response
+```json
+{
+  "id": "2d3f0ffd-1084-409a-a65e-45499ef7d5c0",
+  "callbackUrl": "https://merchant.example.com/webhooks/logistics-v2",
+  "events": ["ShipmentStatusChanged"],
+  "isActive": true,
+  "createdAt": "2026-03-23T10:00:00Z",
+  "updatedAt": "2026-03-23T10:15:00Z"
+}
+```
+
+### DELETE `/api/v1/webhooks/subscriptions/{id}`
+Response: `204 No Content`
+
+### Delivery payloads
+Webhook body is the raw integration event envelope published by the platform.
+
+Example `ShipmentStatusChanged` delivery:
+```json
+{
+  "eventId": "f8e8f0ca-d86d-46d3-ae34-ae10f233e84d",
+  "correlationId": "d6b5b2f7-e8ea-4c36-8bd1-c0fa2f073421",
+  "occurredOn": "2026-03-23T11:05:00Z",
+  "version": 1,
+  "payload": {
+    "shipmentId": "1c84ac03-0aef-46c6-92bf-f52a3cd6b568",
+    "trackingCode": "LGA2603000001",
+    "shipmentCode": "SHIP-20260323-0001",
+    "fromStatus": "Created",
+    "toStatus": "InTransit",
+    "hubId": "5ad0ed67-f7c9-43c7-8a62-fd3ac4046db2",
+    "hubCode": "SGN-HUB-01",
+    "location": "Ho Chi Minh City",
+    "note": "Đã nhập kho trung chuyển",
+    "operatorId": "0df8b5aa-a2b3-4f2b-a9af-6fe90f9f34ee",
+    "operatorName": "Hub Staff A",
+    "occurredAt": "2026-03-23T11:05:00Z"
+  }
 }
 ```
 
 ### Signature convention (HMAC)
 - Header: `X-Webhook-Signature: sha256=<hex>`
 - Signature = `HMACSHA256(secret, raw_body)`
+- Additional headers:
+  - `X-Webhook-Event`
+  - `X-Webhook-Event-Id`
+
+### Delivery reliability
+- Webhook deliveries are persisted in `notifications.webhook_deliveries` before sending.
+- Failed deliveries are retried with exponential backoff.
+- When retries are exhausted, delivery status becomes `Exhausted` for operator review.
+- Request/response metadata is logged, but signing secrets are never written to logs.
 
 ---
 
