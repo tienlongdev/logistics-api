@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Filter, Search } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -33,7 +34,9 @@ const defaultFilters: SearchFiltersSchema = {
 };
 
 export default function SearchPage() {
+  const searchParams = useSearchParams();
   const accessToken = useAuthStore((state) => state.accessToken ?? undefined);
+  const trackingInputRef = useRef<HTMLInputElement | null>(null);
   const [filters, setFilters] = useState<SearchFiltersSchema>(defaultFilters);
   const [page, setPage] = useState(1);
   const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export default function SearchPage() {
     resolver: zodResolver(searchFiltersSchema),
     defaultValues: defaultFilters,
   });
+  const trackingField = form.register("trackingCode");
 
   const query = useQuery({
     enabled: Boolean(accessToken),
@@ -51,14 +55,21 @@ export default function SearchPage() {
   const selectedItem = query.data?.items.find((item) => item.shipmentId === selectedShipmentId) ?? query.data?.items[0] ?? null;
   const totalPages = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.pageSize)) : 1;
 
+  useEffect(() => {
+    if (searchParams.get("focus") === "primary") {
+      trackingInputRef.current?.focus();
+    }
+  }, [searchParams]);
+
   return (
     <div className="grid gap-6">
       <div className="page-header">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Search</p>
-          <h2 className="text-3xl font-semibold">Elasticsearch-powered search</h2>
+        <div className="space-y-3">
+          <p className="section-kicker">Search</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Elasticsearch-powered search</h2>
+          <p className="page-copy">Advanced filters stay within the existing search endpoint and are optimized for fast keyboard entry. Use the shell shortcut to land here and focus the first field instantly.</p>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">Trang nay align voi filter set da ghi trong contract: trackingCode, shipmentCode, merchantCode, receiverPhone, status va date range.</p>
+        <div className="keyboard-hint">Cmd/Ctrl + K</div>
       </div>
 
       <Card>
@@ -74,7 +85,15 @@ export default function SearchPage() {
           })}>
             <div className="space-y-2">
               <Label htmlFor="search-tracking">Tracking code</Label>
-              <Input id="search-tracking" {...form.register("trackingCode")} placeholder="LGA..." />
+              <Input
+                id="search-tracking"
+                {...trackingField}
+                ref={(node) => {
+                  trackingField.ref(node);
+                  trackingInputRef.current = node;
+                }}
+                placeholder="LGA..."
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="search-shipment">Shipment code</Label>
@@ -136,10 +155,10 @@ export default function SearchPage() {
         <ErrorState description={query.error instanceof Error ? query.error.message : "Khong the tim kiem shipments."} onRetry={() => query.refetch()} />
       ) : null}
 
-      {query.isLoading ? <PageLoadingState /> : null}
+      {query.isLoading ? <PageLoadingState variant="list" /> : null}
 
       {query.isSuccess && query.data.items.length === 0 ? (
-        <EmptyState icon={Search} title="Khong co du lieu khop" description="Thu no wider date range hoac bo bot filter merchant / phone / status." />
+        <EmptyState icon={Search} title="Khong co du lieu khop" description="Thu no wider date range hoac bo bot filter merchant / phone / status." variant="search" />
       ) : null}
 
       {query.isSuccess && query.data.items.length > 0 ? (

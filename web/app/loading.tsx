@@ -3,8 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function RootLoading() {
   return (
     <div className="page-shell grid gap-6">
-      <Skeleton className="h-12 w-48" />
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-12 w-72 max-w-full" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Skeleton className="h-36 w-full" />
         <Skeleton className="h-36 w-full" />
         <Skeleton className="h-36 w-full" />
         <Skeleton className="h-36 w-full" />

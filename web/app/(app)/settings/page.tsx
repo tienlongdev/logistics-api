@@ -1,7 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BellRing, LayoutGrid, UserRound } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -22,14 +24,28 @@ export default function SettingsPage() {
     },
   });
 
+  useEffect(() => {
+    const saved = localStorage.getItem("logistics-web-settings");
+
+    if (!saved) {
+      return;
+    }
+
+    try {
+      form.reset(JSON.parse(saved) as SettingsSchema);
+    } catch {
+      localStorage.removeItem("logistics-web-settings");
+    }
+  }, [form]);
+
   return (
     <div className="grid gap-6">
       <div className="page-header">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Settings</p>
-          <h2 className="text-3xl font-semibold">Workspace preferences</h2>
+        <div className="space-y-3">
+          <p className="section-kicker">Settings</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Workspace preferences</h2>
+          <p className="page-copy">These settings stay local on purpose. They refine the frontend experience without changing backend behavior or introducing unsupported APIs.</p>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">Trang nay giu vai tro placeholder cho profile va UI preferences. Tat ca validate bang zod truoc khi luu local.</p>
       </div>
 
       <Card>
@@ -51,27 +67,27 @@ export default function SettingsPage() {
               {form.formState.errors.displayName ? <p className="text-sm text-destructive">{form.formState.errors.displayName.message}</p> : null}
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+            <div className="rounded-[1.2rem] border border-border/70 bg-background/70 p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="font-medium">Email digest</p>
+                  <p className="flex items-center gap-2 font-medium"><BellRing className="h-4 w-4 text-primary" />Email digest</p>
                   <p className="text-sm text-muted-foreground">Nhan tong hop theo ngay cho shipment progress va webhook failures.</p>
                 </div>
                 <input type="checkbox" className="h-4 w-4" aria-label="Toggle email digest" {...form.register("emailDigest")} />
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+            <div className="rounded-[1.2rem] border border-border/70 bg-background/70 p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="font-medium">Compact density</p>
+                  <p className="flex items-center gap-2 font-medium"><LayoutGrid className="h-4 w-4 text-primary" />Compact density</p>
                   <p className="text-sm text-muted-foreground">Dua table va cards ve mat do hien thi dam hon.</p>
                 </div>
                 <input type="checkbox" className="h-4 w-4" aria-label="Toggle compact density" {...form.register("compactDensity")} />
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+            <div className="rounded-[1.2rem] border border-border/70 bg-background/70 p-4">
               <Label htmlFor="theme-mode">Theme mode</Label>
               <select
                 id="theme-mode"
@@ -86,7 +102,10 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <Button type="submit">Luu thay doi</Button>
+              <Button type="submit">
+                <UserRound className="h-4 w-4" />
+                Luu thay doi
+              </Button>
             </div>
           </form>
         </CardContent>

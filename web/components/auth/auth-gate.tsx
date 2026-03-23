@@ -15,12 +15,10 @@ interface AuthGateProps {
 
 export function AuthGate({ children }: AuthGateProps) {
   const pathname = usePathname();
-  const { accessToken, hydrated, isRestoring, refreshToken } = useAuthStore((state) => ({
-    accessToken: state.accessToken,
-    hydrated: state.hydrated,
-    isRestoring: state.isRestoring,
-    refreshToken: state.refreshToken,
-  }));
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const hydrated = useAuthStore((state) => state.hydrated);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
 
   const isPublicRoute = pathname === "/login" || pathname === "/tracking";
 

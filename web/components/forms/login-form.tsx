@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,12 +36,13 @@ export function LoginForm() {
         email: values.email,
         mode: "api",
       });
+      toast.success("Dang nhap thanh cong");
       router.push("/shipments");
     },
   });
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-primary/10 bg-card/95">
       <CardHeader>
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <ShieldCheck className="h-6 w-6" />

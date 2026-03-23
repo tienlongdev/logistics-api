@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 export default function LoginPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(6,182,212,0.16),transparent_25%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.18),transparent_24%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(8,145,178,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.1),transparent_24%)]" />
       <div className="relative grid w-full max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <section className="space-y-6">
           <Badge variant="secondary" className="w-fit">Next.js + TanStack Query + Zustand + shadcn/ui</Badge>

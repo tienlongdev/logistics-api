@@ -15,13 +15,13 @@ export function ErrorState({
   onRetry,
 }: ErrorStateProps) {
   return (
-    <Card>
+    <Card className="border-destructive/20">
       <CardHeader>
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
           <AlertTriangle className="h-6 w-6" />
         </div>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="max-w-xl">{description}</CardDescription>
       </CardHeader>
       {onRetry ? (
         <CardContent>
