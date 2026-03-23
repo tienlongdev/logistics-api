@@ -15,17 +15,39 @@ interface AuthGateProps {
 
 export function AuthGate({ children }: AuthGateProps) {
   const pathname = usePathname();
-  const { accessToken, hydrated } = useAuthStore((state) => ({
+  const { accessToken, hydrated, isRestoring, refreshToken } = useAuthStore((state) => ({
     accessToken: state.accessToken,
     hydrated: state.hydrated,
+    isRestoring: state.isRestoring,
+    refreshToken: state.refreshToken,
   }));
+
+  const isPublicRoute = pathname === "/login" || pathname === "/tracking";
 
   if (!hydrated) {
     return null;
   }
 
-  if (pathname === "/login") {
+  if (isPublicRoute) {
     return <>{children}</>;
+  }
+
+  if (isRestoring || (!accessToken && refreshToken)) {
+    return (
+      <div className="page-shell flex min-h-screen items-center justify-center">
+        <Card className="max-w-xl">
+          <CardHeader>
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+              <LockKeyhole className="h-6 w-6" />
+            </div>
+            <CardTitle>Restoring session</CardTitle>
+            <CardDescription>
+              Access token chi duoc giu trong memory. Frontend dang dung refresh token tam thoi trong session storage de khoi phuc phien dang nhap.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   if (!accessToken) {
@@ -36,9 +58,9 @@ export function AuthGate({ children }: AuthGateProps) {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
               <LockKeyhole className="h-6 w-6" />
             </div>
-            <CardTitle>Auth gate placeholder</CardTitle>
+            <CardTitle>Authentication required</CardTitle>
             <CardDescription>
-              Route nay can session dang nhap. Dang su dung auth gate placeholder de khoa khu vuc van hanh trong luc backend auth dang duoc ket noi.
+              Route nay goi endpoint can bearer token. Dang nhap de frontend co the su dung `POST /api/v1/auth/login` va tu dong refresh khi gap `401`.
             </CardDescription>
           </CardHeader>
           <CardContent>

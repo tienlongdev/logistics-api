@@ -2,27 +2,26 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { MapPinned } from "lucide-react";
+import { Clock3, MapPinned } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { getTrackingSummary, getTrackingTimeline } from "@/lib/api/client";
-import { shipmentStatusTone } from "@/lib/constants/status";
 import { formatDate } from "@/lib/utils";
 import { trackingLookupSchema, type TrackingLookupSchema } from "@/lib/validation/search";
 
 export default function TrackingPage() {
-  const [trackingCode, setTrackingCode] = useState("LGA2603000001");
+  const [trackingCode, setTrackingCode] = useState("");
   const form = useForm<TrackingLookupSchema>({
     resolver: zodResolver(trackingLookupSchema),
-    defaultValues: { trackingCode: "LGA2603000001" },
+    defaultValues: { trackingCode: "" },
   });
 
   const summaryQuery = useQuery({
@@ -44,7 +43,7 @@ export default function TrackingPage() {
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Tracking</p>
           <h2 className="text-3xl font-semibold">Public timeline lookup</h2>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">Route nay goi public tracking endpoints theo contract da implemented trong backend va co the duoc merchant staff dung trong shell noi bo.</p>
+        <p className="max-w-xl text-sm text-muted-foreground">Route nay public, mobile-first, va chi dung `GET /api/v1/tracking/{trackingCode}` cung timeline endpoint tu backend.</p>
       </div>
 
       <Card>
@@ -83,7 +82,7 @@ export default function TrackingPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               {summaryQuery.data.trackingCode}
-              <Badge variant={shipmentStatusTone[summaryQuery.data.currentStatus]}>{summaryQuery.data.currentStatus}</Badge>
+              <StatusBadge status={summaryQuery.data.currentStatus} />
             </CardTitle>
             <CardDescription>{summaryQuery.data.shipmentCode} · Receiver {summaryQuery.data.receiverName}</CardDescription>
           </CardHeader>
@@ -103,12 +102,12 @@ export default function TrackingPage() {
             {timelineQuery.data.events.map((event, index) => (
               <div key={event.eventId} className="relative flex gap-4 pl-8">
                 <div className="absolute left-0 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <MapPinned className="h-3 w-3" />
+                  <Clock3 className="h-3 w-3" />
                 </div>
                 {index < timelineQuery.data.events.length - 1 ? <div className="absolute left-2.5 top-6 h-[calc(100%+0.5rem)] w-px bg-border" /> : null}
                 <div className="w-full rounded-2xl border border-border/70 bg-background/70 p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={shipmentStatusTone[event.toStatus]}>{event.toStatus}</Badge>
+                    <StatusBadge status={event.toStatus} />
                     <span className="text-sm text-muted-foreground">{formatDate(event.occurredAt)}</span>
                   </div>
                   <p className="mt-2 text-sm">{event.note ?? "Khong co ghi chu"}</p>
@@ -122,6 +121,10 @@ export default function TrackingPage() {
 
       {timelineQuery.isSuccess && !timelineQuery.data.events.length ? (
         <EmptyState icon={MapPinned} title="Chua co timeline" description="Tracking code hop le nhung backend chua tra ve event nao." />
+      ) : null}
+
+      {!trackingCode && !summaryQuery.isFetching ? (
+        <EmptyState icon={MapPinned} title="Nhap tracking code" description="Public tracking route khong can dang nhap. Nhap ma van don de xem status va timeline." />
       ) : null}
     </div>
   );

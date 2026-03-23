@@ -1,31 +1,27 @@
 import { z } from "zod";
 
-const shipmentStatusSchema = z.enum([
-  "Created",
-  "AwaitingPickup",
-  "PickedUp",
-  "InboundAtOriginHub",
-  "InTransit",
-  "InboundAtDestinationHub",
-  "OutForDelivery",
-  "DeliveryAttemptFailed",
-  "Delivered",
-  "Cancelled",
-  "Returned",
-  "ReturnInTransit",
-  "ReturnedToSender",
-]);
+import { shipmentStatuses } from "@/lib/types/api";
 
-export const searchFiltersSchema = z.object({
-  trackingCode: z.string().optional(),
-  shipmentCode: z.string().optional(),
-  merchantCode: z.string().optional(),
-  receiverPhone: z.string().optional(),
-  status: z.union([z.literal(""), shipmentStatusSchema]).optional(),
-  fromDate: z.string().optional(),
-  toDate: z.string().optional(),
-  sort: z.string().default("updatedAt:desc"),
-});
+const shipmentStatusSchema = z.enum(shipmentStatuses);
+
+export const searchFiltersSchema = z
+  .object({
+    trackingCode: z.string().optional(),
+    shipmentCode: z.string().optional(),
+    merchantCode: z.string().optional(),
+    receiverPhone: z.string().optional(),
+    status: z.union([z.literal(""), shipmentStatusSchema]).optional(),
+    fromDate: z.string().optional(),
+    toDate: z.string().optional(),
+    sort: z.string().default("updatedAt:desc"),
+  })
+  .refine(
+    (value) => !value.fromDate || !value.toDate || value.fromDate <= value.toDate,
+    {
+      message: "Ngay ket thuc phai lon hon hoac bang ngay bat dau.",
+      path: ["toDate"],
+    },
+  );
 
 export type SearchFiltersSchema = z.infer<typeof searchFiltersSchema>;
 

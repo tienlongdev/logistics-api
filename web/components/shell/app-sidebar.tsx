@@ -65,7 +65,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
 
       <div className="mt-auto rounded-2xl border border-dashed border-border p-4">
         <p className="text-sm font-medium">API-aware UI</p>
-        <p className="mt-1 text-sm text-muted-foreground">Search va tracking da map theo contract trong `/docs/api-contract.md`.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Search, tracking, auth va status transition da map theo contract/backend code hien tai.</p>
       </div>
     </div>
   );
