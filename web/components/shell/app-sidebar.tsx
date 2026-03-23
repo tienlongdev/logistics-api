@@ -27,12 +27,12 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-border/70 bg-accent/60 p-4">
+      <div className="mb-6 rounded-[1.4rem] border border-border/70 bg-gradient-to-br from-accent via-card to-card p-4">
         <div className="mb-2 flex items-center gap-2 text-sm font-medium text-accent-foreground">
           <Sparkles className="h-4 w-4" />
-          Modern SaaS shell
+          Focused operating surface
         </div>
-        <p className="text-sm text-muted-foreground">Sidebar desktop, drawer mobile, tokenized theme va query cache san sang cho backend.</p>
+        <p className="text-sm leading-6 text-muted-foreground">Spacious panels, restrained accent color, and responsive navigation tuned for daily operations work.</p>
       </div>
 
       <nav className="space-y-1" aria-label="Primary navigation">
@@ -46,8 +46,8 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "group flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors",
-                isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent",
+                "group flex items-start gap-3 rounded-[1.2rem] px-3 py-3 transition-all duration-200",
+                isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "hover:bg-accent/80",
               )}
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -63,9 +63,9 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-2xl border border-dashed border-border p-4">
-        <p className="text-sm font-medium">API-aware UI</p>
-        <p className="mt-1 text-sm text-muted-foreground">Search, tracking, auth va status transition da map theo contract/backend code hien tai.</p>
+      <div className="mt-auto rounded-[1.2rem] border border-dashed border-border p-4">
+        <p className="text-sm font-medium">No invented APIs</p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">Search, tracking, auth, and shipment transitions stay strictly inside the implemented backend contract.</p>
       </div>
     </div>
   );

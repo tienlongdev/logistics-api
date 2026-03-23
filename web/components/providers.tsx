@@ -14,14 +14,12 @@ interface ProvidersProps {
 }
 
 function AuthSessionBootstrap() {
-  const { accessToken, finishRestoring, hydrated, isRestoring, refreshToken, startRestoring } = useAuthStore((state) => ({
-    accessToken: state.accessToken,
-    finishRestoring: state.finishRestoring,
-    hydrated: state.hydrated,
-    isRestoring: state.isRestoring,
-    refreshToken: state.refreshToken,
-    startRestoring: state.startRestoring,
-  }));
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const finishRestoring = useAuthStore((state) => state.finishRestoring);
+  const hydrated = useAuthStore((state) => state.hydrated);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+  const startRestoring = useAuthStore((state) => state.startRestoring);
 
   useEffect(() => {
     if (!hydrated || accessToken || !refreshToken || isRestoring) {
@@ -46,7 +44,18 @@ export function Providers({ children }: ProvidersProps) {
       <QueryClientProvider client={queryClient}>
         <AuthSessionBootstrap />
         {children}
-        <Toaster richColors closeButton position="top-right" />
+        <Toaster
+          richColors
+          closeButton
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              toast: "rounded-2xl border border-border/80 shadow-xl",
+              title: "text-sm font-semibold",
+              description: "text-sm",
+            },
+          }}
+        />
       </QueryClientProvider>
     </ThemeProvider>
   );

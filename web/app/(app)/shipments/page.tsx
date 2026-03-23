@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Boxes, PackageSearch } from "lucide-react";
+import { Boxes, PackageSearch, Search } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { BackendNotAvailable } from "@/components/feedback/backend-not-available";
@@ -46,13 +47,22 @@ function mapCodeFilters(code: string) {
 }
 
 export default function ShipmentsPage() {
+  const searchParams = useSearchParams();
   const accessToken = useAuthStore((state) => state.accessToken ?? undefined);
+  const codeInputRef = useRef<HTMLInputElement | null>(null);
   const form = useForm<ShipmentFiltersSchema>({
     resolver: zodResolver(shipmentFiltersSchema),
     defaultValues: defaultFilters,
   });
+  const codeField = form.register("code");
   const [filters, setFilters] = useState<ShipmentFiltersSchema>(defaultFilters);
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (searchParams.get("focus") === "code") {
+      codeInputRef.current?.focus();
+    }
+  }, [searchParams]);
 
   const query = useQuery({
     enabled: Boolean(accessToken),
@@ -82,11 +92,17 @@ export default function ShipmentsPage() {
   return (
     <div className="grid gap-6">
       <div className="page-header">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Shipments</p>
-          <h2 className="text-3xl font-semibold">Merchant shipment workspace</h2>
+        <div className="space-y-3">
+          <p className="section-kicker">Shipments</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Merchant shipment workspace</h2>
+          <p className="page-copy">This screen keeps using the implemented search endpoint as the list read model until dedicated merchant shipment listing APIs are available.</p>
         </div>
-        <p className="max-w-2xl text-sm text-muted-foreground">Table nay dung search read model vi backend hien chua co `GET /api/v1/shipments` merchant listing API.</p>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => codeInputRef.current?.focus()}>
+            <Search className="h-4 w-4" />
+            Focus code filter
+          </Button>
+        </div>
       </div>
 
       <BackendNotAvailable
@@ -97,7 +113,7 @@ export default function ShipmentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Quick filters</CardTitle>
-          <CardDescription>Filter theo status, date range, code va receiver phone tren `GET /api/v1/search/shipments`.</CardDescription>
+          <CardDescription>Filter by tracking or shipment code, receiver phone, date range, and status on the current backend search contract.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -109,7 +125,15 @@ export default function ShipmentsPage() {
           >
             <div className="space-y-2 xl:col-span-2">
               <Label htmlFor="code-filter">Code</Label>
-              <Input id="code-filter" placeholder="Tracking code hoac shipment code" {...form.register("code")} />
+              <Input
+                id="code-filter"
+                placeholder="Tracking code hoac shipment code"
+                {...codeField}
+                ref={(node) => {
+                  codeField.ref(node);
+                  codeInputRef.current = node;
+                }}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="receiver-phone">Receiver phone</Label>
@@ -147,36 +171,87 @@ export default function ShipmentsPage() {
         </CardContent>
       </Card>
 
-      {query.isLoading ? <PageLoadingState /> : null}
+      {query.isLoading ? <PageLoadingState variant="list" /> : null}
       {query.isError ? (
         <ErrorState description={query.error instanceof Error ? query.error.message : "Khong the tai shipments."} onRetry={() => query.refetch()} />
       ) : null}
       {query.isSuccess && query.data.items.length === 0 ? (
-        <EmptyState icon={PackageSearch} title="Khong co ket qua" description="Thu bo bot filter hoac doi backend search indexing them du lieu." />
+        <EmptyState icon={PackageSearch} title="Khong co ket qua" description="Thu bo bot filter hoac doi backend search indexing them du lieu." variant="shipments" />
       ) : null}
       {query.isSuccess && query.data.items.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Shipment list</CardTitle>
-            <CardDescription>{query.data.total.toLocaleString("vi-VN")} ket qua.</CardDescription>
+            <CardDescription>{query.data.total.toLocaleString("vi-VN")} ket qua. Desktop dung bang, mobile dung stacked cards de giu kha nang doc nhanh.</CardDescription>
           </CardHeader>
           <CardContent className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="text-muted-foreground">
+            <div className="grid gap-3 md:hidden">
+              {query.data.items.map((item) => (
+                <Link
+                  key={item.shipmentId}
+                  href={{
+                    pathname: `/shipments/${isUuid(item.shipmentId) ? item.shipmentId : item.trackingCode}`,
+                    query: {
+                      codAmount: String(item.codAmount),
+                      createdAt: item.createdAt,
+                      receiverName: item.receiverName,
+                      receiverPhone: item.receiverPhone,
+                      senderName: item.senderName,
+                      shipmentCode: item.shipmentCode,
+                      shippingFee: String(item.shippingFee),
+                      status: item.status,
+                      totalFee: String(item.totalFee),
+                      trackingCode: item.trackingCode,
+                    },
+                  }}
+                  className="rounded-[1.2rem] border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/40"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-primary">{item.trackingCode}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{item.shipmentCode}</p>
+                    </div>
+                    <StatusBadge status={item.status} />
+                  </div>
+                  <div className="mt-4 space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium">{item.receiverName}</p>
+                      <p className="text-muted-foreground">{item.receiverPhone}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Created</p>
+                        <p className="mt-1 font-medium">{formatDate(item.createdAt)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">COD</p>
+                        <p className="mt-1 font-medium">{formatCurrency(item.codAmount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Fee</p>
+                        <p className="mt-1 font-medium">{formatCurrency(item.totalFee)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <table className="data-table hidden md:table">
+              <thead>
                 <tr>
-                  <th className="pb-3 font-medium">Tracking</th>
-                  <th className="pb-3 font-medium">Shipment code</th>
-                  <th className="pb-3 font-medium">Receiver</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Created</th>
-                  <th className="pb-3 font-medium">COD</th>
-                  <th className="pb-3 font-medium">Fee</th>
+                  <th>Tracking</th>
+                  <th>Shipment code</th>
+                  <th>Receiver</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>COD</th>
+                  <th>Fee</th>
                 </tr>
               </thead>
               <tbody>
                 {query.data.items.map((item) => (
-                  <tr key={item.shipmentId} className="border-t border-border/70">
-                    <td className="py-4 font-medium">
+                  <tr key={item.shipmentId}>
+                    <td className="font-medium">
                       <Link
                         href={{
                           pathname: `/shipments/${isUuid(item.shipmentId) ? item.shipmentId : item.trackingCode}`,
@@ -198,15 +273,15 @@ export default function ShipmentsPage() {
                         {item.trackingCode}
                       </Link>
                     </td>
-                    <td className="py-4">{item.shipmentCode}</td>
-                    <td className="py-4">
+                    <td>{item.shipmentCode}</td>
+                    <td>
                       <div>{item.receiverName}</div>
                       <div className="text-xs text-muted-foreground">{item.receiverPhone}</div>
                     </td>
-                    <td className="py-4"><StatusBadge status={item.status} /></td>
-                    <td className="py-4 text-muted-foreground">{formatDate(item.createdAt)}</td>
-                    <td className="py-4">{formatCurrency(item.codAmount)}</td>
-                    <td className="py-4">{formatCurrency(item.totalFee)}</td>
+                    <td><StatusBadge status={item.status} /></td>
+                    <td className="text-muted-foreground">{formatDate(item.createdAt)}</td>
+                    <td>{formatCurrency(item.codAmount)}</td>
+                    <td>{formatCurrency(item.totalFee)}</td>
                   </tr>
                 ))}
               </tbody>

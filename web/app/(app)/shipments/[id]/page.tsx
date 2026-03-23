@@ -5,16 +5,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock3, Package2, Phone, RefreshCcw, Route, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { BackendNotAvailable } from "@/components/feedback/backend-not-available";
+import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
+import { PageLoadingState } from "@/components/feedback/page-loading-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
     getTrackingSummary,
     getTrackingTimeline,
@@ -39,10 +44,8 @@ export default function ShipmentDetailPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { accessToken, roles } = useAuthStore((state) => ({
-    accessToken: state.accessToken ?? undefined,
-    roles: state.roles,
-  }));
+  const accessToken = useAuthStore((state) => state.accessToken ?? undefined);
+  const roles = useAuthStore((state) => state.roles);
 
   const routeId = params.id;
   const shipmentId = isUuid(routeId) ? routeId : null;
@@ -56,6 +59,7 @@ export default function ShipmentDetailPage() {
   const shippingFee = readNumber(searchParams.get("shippingFee"));
   const totalFee = readNumber(searchParams.get("totalFee"));
   const canTransitionStatus = Boolean(shipmentId && roles.some((role) => privilegedRoles.has(role)));
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const transitionForm = useForm<ShipmentStatusTransitionSchema>({
     resolver: zodResolver(shipmentStatusTransitionSchema),
@@ -98,6 +102,8 @@ export default function ShipmentDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["shipment-detail", "tracking-summary", trackingCode] }),
         queryClient.invalidateQueries({ queryKey: ["shipment-detail", "tracking-timeline", trackingCode] }),
       ]);
+      setConfirmOpen(false);
+      toast.success("Da cap nhat trang thai shipment");
     },
   });
 
@@ -142,6 +148,8 @@ export default function ShipmentDetailPage() {
         />
       ) : null}
 
+      {summaryQuery.isLoading || timelineQuery.isLoading ? <PageLoadingState variant="detail" /> : null}
+
       <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="grid gap-4">
           <Card>
@@ -171,7 +179,7 @@ export default function ShipmentDetailPage() {
                   </div>
                 ))
               ) : timelineQuery.isSuccess ? (
-                <EmptyState icon={Route} title="Chua co timeline" description="Backend tracking co summary nhung chua tra event nao." />
+                <EmptyState icon={Route} title="Chua co timeline" description="Backend tracking co summary nhung chua tra event nao." variant="tracking" />
               ) : null}
             </CardContent>
           </Card>
@@ -266,7 +274,7 @@ export default function ShipmentDetailPage() {
                 <CardDescription>Form nay goi POST /api/v1/shipments/:id/status-transitions va chi hien khi token co role HubStaff, Operator hoac Admin.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="grid gap-4" onSubmit={transitionForm.handleSubmit((values) => transitionMutation.mutate(values))}>
+                <form className="grid gap-4" onSubmit={transitionForm.handleSubmit(() => setConfirmOpen(true))}>
                   <div className="space-y-2">
                     <Label htmlFor="toStatus">To status</Label>
                     <select
@@ -293,7 +301,7 @@ export default function ShipmentDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="note">Note</Label>
-                    <Input id="note" placeholder="Da lay hang" {...transitionForm.register("note")} />
+                    <Textarea id="note" placeholder="Da lay hang" {...transitionForm.register("note")} />
                   </div>
                   <Button type="submit" disabled={transitionMutation.isPending}>
                     {transitionMutation.isPending ? "Dang cap nhat..." : "Cap nhat trang thai"}
@@ -330,6 +338,16 @@ export default function ShipmentDetailPage() {
           ) : null}
         </div>
       </section>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Xac nhan cap nhat trang thai?"
+        description="Thao tac nay se goi shipment status transition endpoint hien co. Chi tiep tuc neu hub code, location va thoi diem da dung."
+        confirmLabel="Xac nhan cap nhat"
+        onConfirm={() => transitionForm.handleSubmit((values) => transitionMutation.mutate(values))()}
+        pending={transitionMutation.isPending}
+      />
     </div>
   );
 }

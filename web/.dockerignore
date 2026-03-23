@@ -1,0 +1,9 @@
+.next
+node_modules
+playwright-report
+test-results
+npm-debug.log
+pnpm-debug.log
+.git
+.DS_Store
+coverage

@@ -1,12 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, CircleAlert, Package, Truck } from "lucide-react";
+import { ArrowUpRight, BarChart3, CircleAlert, Package, Truck } from "lucide-react";
+import Link from "next/link";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { PageLoadingState } from "@/components/feedback/page-loading-state";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDashboardSnapshot } from "@/lib/api/client";
 import { shipmentStatusTone } from "@/lib/constants/status";
@@ -46,14 +48,22 @@ export default function DashboardPage() {
   return (
     <div className="grid gap-6">
       <div className="page-header">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Overview</p>
-          <h2 className="text-3xl font-semibold">Operational pulse</h2>
+        <div className="space-y-3">
+          <p className="section-kicker">Overview</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Operational pulse</h2>
+          <p className="page-copy">Search read model is still the dashboard source of truth for recent shipment activity, so this page stays aligned with the current backend contract.</p>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">Dashboard doc `GET /api/v1/search/shipments` lam read model tam thoi cho den khi shipment query API duoc implement.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button asChild variant="outline">
+            <Link href="/shipments">
+              Mo shipment workspace
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {query.isLoading ? <PageLoadingState /> : null}
+      {query.isLoading ? <PageLoadingState variant="dashboard" /> : null}
 
       {query.isError ? (
         <ErrorState description={query.error instanceof Error ? query.error.message : "Khong the tai dashboard."} onRetry={() => query.refetch()} />
@@ -63,7 +73,7 @@ export default function DashboardPage() {
         <div className="grid gap-6">
           <section className="grid-stagger grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {statCards.map(({ key, label, icon: Icon }) => (
-              <Card key={key}>
+              <Card key={key} className="bg-gradient-to-br from-card via-card to-accent/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                   <CardDescription>{label}</CardDescription>
                   <div className="rounded-full bg-accent p-2 text-accent-foreground">
@@ -82,34 +92,58 @@ export default function DashboardPage() {
               icon={Package}
               title="Chua co shipment gan day"
               description="Khi backend co du lieu search, dashboard se tu dong render bang recent shipments tai day."
+              variant="shipments"
             />
           ) : (
             <Card>
               <CardHeader>
                 <CardTitle>Recent shipments</CardTitle>
-                <CardDescription>Du lieu lay tu `GET /api/v1/search/shipments`.</CardDescription>
+                <CardDescription>Latest searchable shipments rendered as a compact operations snapshot.</CardDescription>
               </CardHeader>
               <CardContent className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="text-muted-foreground">
+                <div className="grid gap-3 md:hidden">
+                  {query.data.items.map((item) => (
+                    <div key={item.shipmentId} className="rounded-[1.2rem] border border-border/70 bg-background/70 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{item.trackingCode}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{item.receiverName}</p>
+                        </div>
+                        <Badge variant={shipmentStatusTone[item.status]}>{item.status}</Badge>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Fee</p>
+                          <p className="mt-1 font-medium">{formatCurrency(item.totalFee)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Updated</p>
+                          <p className="mt-1 font-medium">{formatDate(item.updatedAt)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <table className="data-table hidden md:table">
+                  <thead>
                     <tr>
-                      <th className="pb-3 font-medium">Tracking</th>
-                      <th className="pb-3 font-medium">Receiver</th>
-                      <th className="pb-3 font-medium">Status</th>
-                      <th className="pb-3 font-medium">Total fee</th>
-                      <th className="pb-3 font-medium">Updated</th>
+                      <th>Tracking</th>
+                      <th>Receiver</th>
+                      <th>Status</th>
+                      <th>Total fee</th>
+                      <th>Updated</th>
                     </tr>
                   </thead>
                   <tbody>
                     {query.data.items.map((item) => (
-                      <tr key={item.shipmentId} className="border-t border-border/70">
-                        <td className="py-4 font-medium">{item.trackingCode}</td>
-                        <td className="py-4">{item.receiverName}</td>
-                        <td className="py-4">
+                      <tr key={item.shipmentId}>
+                        <td className="font-medium">{item.trackingCode}</td>
+                        <td>{item.receiverName}</td>
+                        <td>
                           <Badge variant={shipmentStatusTone[item.status]}>{item.status}</Badge>
                         </td>
-                        <td className="py-4">{formatCurrency(item.totalFee)}</td>
-                        <td className="py-4 text-muted-foreground">{formatDate(item.updatedAt)}</td>
+                        <td>{formatCurrency(item.totalFee)}</td>
+                        <td className="text-muted-foreground">{formatDate(item.updatedAt)}</td>
                       </tr>
                     ))}
                   </tbody>
