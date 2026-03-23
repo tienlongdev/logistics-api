@@ -15,7 +15,7 @@ export const shipmentFiltersSchema = z
   .refine(
     (value) => !value.fromDate || !value.toDate || value.fromDate <= value.toDate,
     {
-      message: "Ngay ket thuc phai lon hon hoac bang ngay bat dau.",
+      message: "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.",
       path: ["toDate"],
     },
   );
@@ -23,9 +23,9 @@ export const shipmentFiltersSchema = z
 export type ShipmentFiltersSchema = z.infer<typeof shipmentFiltersSchema>;
 
 export const shipmentStatusTransitionSchema = z.object({
-  hubCode: z.string().max(64, "Hub code qua dai.").optional(),
-  location: z.string().max(128, "Location qua dai.").optional(),
-  note: z.string().max(500, "Ghi chu toi da 500 ky tu.").optional(),
+  hubCode: z.string().max(64, "Mã hub quá dài.").optional(),
+  location: z.string().max(128, "Vị trí quá dài.").optional(),
+  note: z.string().max(500, "Ghi chú tối đa 500 ký tự.").optional(),
   occurredAt: z.string().optional(),
   toStatus: shipmentStatusSchema,
 });

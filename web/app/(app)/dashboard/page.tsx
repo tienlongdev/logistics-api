@@ -18,22 +18,22 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 const statCards = [
   {
     key: "total",
-    label: "Tong shipments",
+    label: "Tổng đơn hàng",
     icon: Package,
   },
   {
     key: "inTransit",
-    label: "Dang van chuyen",
+    label: "Đang vận chuyển",
     icon: Truck,
   },
   {
     key: "delivered",
-    label: "Da giao",
+    label: "Đã giao",
     icon: BarChart3,
   },
   {
     key: "cancelled",
-    label: "Da huy",
+    label: "Đã hủy",
     icon: CircleAlert,
   },
 ] as const;
@@ -49,14 +49,14 @@ export default function DashboardPage() {
     <div className="grid gap-6">
       <div className="page-header">
         <div className="space-y-3">
-          <p className="section-kicker">Overview</p>
-          <h2 className="text-3xl font-semibold sm:text-4xl">Operational pulse</h2>
-          <p className="page-copy">Search read model is still the dashboard source of truth for recent shipment activity, so this page stays aligned with the current backend contract.</p>
+          <p className="section-kicker">Tổng quan</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Hoạt động hôm nay</h2>
+          <p className="page-copy">Theo dõi tổng hợp tình trạng đơn hàng và các giao dịch mới nhất.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button asChild variant="outline">
             <Link href="/shipments">
-              Mo shipment workspace
+              Xem danh sách đơn hàng
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -66,7 +66,7 @@ export default function DashboardPage() {
       {query.isLoading ? <PageLoadingState variant="dashboard" /> : null}
 
       {query.isError ? (
-        <ErrorState description={query.error instanceof Error ? query.error.message : "Khong the tai dashboard."} onRetry={() => query.refetch()} />
+        <ErrorState description={query.error instanceof Error ? query.error.message : "Không thể tải dữ liệu. Vui lòng thử lại."} onRetry={() => query.refetch()} />
       ) : null}
 
       {query.isSuccess ? (
@@ -90,15 +90,15 @@ export default function DashboardPage() {
           {query.data.items.length === 0 ? (
             <EmptyState
               icon={Package}
-              title="Chua co shipment gan day"
-              description="Khi backend co du lieu search, dashboard se tu dong render bang recent shipments tai day."
+              title="Chưa có đơn hàng nào"
+              description="Khi có dữ liệu, các đơn hàng mới nhất sẽ hiển thị tại đây."
               variant="shipments"
             />
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Recent shipments</CardTitle>
-                <CardDescription>Latest searchable shipments rendered as a compact operations snapshot.</CardDescription>
+                <CardTitle>Đơn hàng gần đây</CardTitle>
+                <CardDescription>Các đơn hàng mới nhất trong hệ thống.</CardDescription>
               </CardHeader>
               <CardContent className="overflow-x-auto">
                 <div className="grid gap-3 md:hidden">
@@ -113,11 +113,11 @@ export default function DashboardPage() {
                       </div>
                       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Fee</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Phí</p>
                           <p className="mt-1 font-medium">{formatCurrency(item.totalFee)}</p>
                         </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Updated</p>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Cập nhật</p>
                           <p className="mt-1 font-medium">{formatDate(item.updatedAt)}</p>
                         </div>
                       </div>
@@ -127,11 +127,11 @@ export default function DashboardPage() {
                 <table className="data-table hidden md:table">
                   <thead>
                     <tr>
-                      <th>Tracking</th>
-                      <th>Receiver</th>
-                      <th>Status</th>
-                      <th>Total fee</th>
-                      <th>Updated</th>
+                      <th>Mã vận đơn</th>
+                      <th>Người nhận</th>
+                      <th>Trạng thái</th>
+                      <th>Phí giao</th>
+                      <th>Cập nhật</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Boxes, Sparkles } from "lucide-react";
+import { Boxes } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -22,17 +22,9 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           <Boxes className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-sm font-semibold">Logistics Web</p>
-          <p className="text-xs text-muted-foreground">Merchant operations console</p>
+          <p className="text-sm font-semibold">Vận chuyển</p>
+          <p className="text-xs text-muted-foreground">Hệ thống quản lý đơn hàng</p>
         </div>
-      </div>
-
-      <div className="mb-6 rounded-[1.4rem] border border-border/70 bg-gradient-to-br from-accent via-card to-card p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-accent-foreground">
-          <Sparkles className="h-4 w-4" />
-          Focused operating surface
-        </div>
-        <p className="text-sm leading-6 text-muted-foreground">Spacious panels, restrained accent color, and responsive navigation tuned for daily operations work.</p>
       </div>
 
       <nav className="space-y-1" aria-label="Primary navigation">
@@ -54,7 +46,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{item.label}</span>
-                  {isActive ? <Badge variant="outline" className="border-white/30 text-current">Live</Badge> : null}
+                  {isActive ? <Badge variant="outline" className="border-white/30 text-current">Đang xem</Badge> : null}
                 </div>
                 <p className={cn("text-xs", isActive ? "text-primary-foreground/80" : "text-muted-foreground")}>{item.description}</p>
               </div>
@@ -63,10 +55,6 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-[1.2rem] border border-dashed border-border p-4">
-        <p className="text-sm font-medium">No invented APIs</p>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">Search, tracking, auth, and shipment transitions stay strictly inside the implemented backend contract.</p>
-      </div>
     </div>
   );
 }

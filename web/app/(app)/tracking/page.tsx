@@ -63,22 +63,22 @@ export default function TrackingPage() {
     <div className="grid gap-6">
       <div className="page-header">
         <div className="space-y-3">
-          <p className="section-kicker">Tracking</p>
-          <h2 className="text-3xl font-semibold sm:text-4xl">Public timeline lookup</h2>
-          <p className="page-copy">This route stays public and uses only the implemented tracking summary and timeline endpoints. Press / to jump into the lookup field.</p>
+          <p className="section-kicker">Tra cứu</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Tra cứu vận đơn</h2>
+          <p className="page-copy">Nhập mã vận đơn để xem trạng thái và hành trình giao hàng. Nhấn <kbd className="keyboard-hint">/</kbd> để tập trung vào ô tìm kiếm.</p>
         </div>
         <div className="keyboard-hint">/</div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Tracking lookup</CardTitle>
-          <CardDescription>Nhap tracking code de lay summary va timeline immutable.</CardDescription>
+          <CardTitle>Tra cứu theo mã vận đơn</CardTitle>
+          <CardDescription>Nhập mã vận đơn để xem thông tin và hành trình giao hàng.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4 md:grid-cols-[1fr_auto]" onSubmit={form.handleSubmit((values) => setTrackingCode(values.trackingCode))}>
             <div className="space-y-2">
-              <Label htmlFor="tracking-code">Tracking code</Label>
+              <Label htmlFor="tracking-code">Mã vận đơn</Label>
               <Input
                 id="tracking-code"
                 {...trackingField}
@@ -86,7 +86,7 @@ export default function TrackingPage() {
                   trackingField.ref(node);
                   trackingInputRef.current = node;
                 }}
-                placeholder="Nhap tracking code"
+                placeholder="Nhập mã vận đơn (ví dụ: LGA...)"
               />
               {form.formState.errors.trackingCode ? (
                 <p className="text-sm text-destructive">{form.formState.errors.trackingCode.message}</p>
@@ -101,7 +101,7 @@ export default function TrackingPage() {
 
       {summaryQuery.isError || timelineQuery.isError ? (
         <ErrorState
-          description={(summaryQuery.error ?? timelineQuery.error) instanceof Error ? (summaryQuery.error ?? timelineQuery.error)?.message ?? "Khong the tai tracking data." : "Khong the tai tracking data."}
+          description={(summaryQuery.error ?? timelineQuery.error) instanceof Error ? (summaryQuery.error ?? timelineQuery.error)?.message ?? "Không thể tải thông tin vận đơn." : "Không thể tải thông tin vận đơn."}
           onRetry={() => {
             void summaryQuery.refetch();
             void timelineQuery.refetch();
@@ -118,10 +118,10 @@ export default function TrackingPage() {
               {summaryQuery.data.trackingCode}
               <StatusBadge status={summaryQuery.data.currentStatus} />
             </CardTitle>
-            <CardDescription>{summaryQuery.data.shipmentCode} · Receiver {summaryQuery.data.receiverName}</CardDescription>
+            <CardDescription>{summaryQuery.data.shipmentCode} · Người nhận: {summaryQuery.data.receiverName}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Cap nhat lan cuoi {formatDate(summaryQuery.data.lastUpdatedAt)}</p>
+            <p className="text-sm text-muted-foreground">Cập nhật lần cuối: {formatDate(summaryQuery.data.lastUpdatedAt)}</p>
           </CardContent>
         </Card>
       ) : null}
@@ -129,8 +129,8 @@ export default function TrackingPage() {
       {timelineQuery.data?.events.length ? (
         <Card>
           <CardHeader>
-            <CardTitle>Tracking timeline</CardTitle>
-            <CardDescription>Events duoc sap xep tu cu nhat den moi nhat theo contract.</CardDescription>
+            <CardTitle>Hành trình vận chuyển</CardTitle>
+            <CardDescription>Lịch sử các sự kiện giao hàng theo thời gian.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {timelineQuery.data.events.map((event, index) => (
@@ -144,8 +144,8 @@ export default function TrackingPage() {
                     <StatusBadge status={event.toStatus} />
                     <span className="text-sm text-muted-foreground">{formatDate(event.occurredAt)}</span>
                   </div>
-                  <p className="mt-2 text-sm">{event.note ?? "Khong co ghi chu"}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{event.location ?? event.hubCode ?? "No hub data"}</p>
+                  <p className="mt-2 text-sm">{event.note ?? "Không có ghi chú"}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{event.location ?? event.hubCode ?? "Không có thông tin vị trí"}</p>
                 </div>
               </div>
             ))}
@@ -154,11 +154,11 @@ export default function TrackingPage() {
       ) : null}
 
       {timelineQuery.isSuccess && !timelineQuery.data.events.length ? (
-        <EmptyState icon={MapPinned} title="Chua co timeline" description="Tracking code hop le nhung backend chua tra ve event nao." variant="tracking" />
+        <EmptyState icon={MapPinned} title="Chưa có hành trình" description="Mã vận đơn hợp lệ nhưng chưa có sự kiện giao hàng nào." variant="tracking" />
       ) : null}
 
       {!trackingCode && !summaryQuery.isFetching ? (
-        <EmptyState icon={MapPinned} title="Nhap tracking code" description="Public tracking route khong can dang nhap. Nhap ma van don de xem status va timeline." variant="tracking" />
+        <EmptyState icon={MapPinned} title="Nhập mã vận đơn" description="Tra cứu không yêu cầu đăng nhập. Nhập mã vận đơn để xem trạng thái và hành trình giao hàng." variant="tracking" />
       ) : null}
     </div>
   );

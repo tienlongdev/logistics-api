@@ -329,6 +329,22 @@ services:
     networks:
       - logistics_net
 
+  logistics_web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: logistics_web
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: "http://localhost:5080"
+      API_INTERNAL_BASE_URL: "http://logistics_api_host:8080"
+    ports:
+      - "3001:3000"
+    depends_on:
+      logistics-api-host:
+        condition: service_healthy
+    networks:
+      - logistics_net
+
 # =============================================
 # Volumes
 # Dùng để giữ dữ liệu bền vững giữa các lần restart container

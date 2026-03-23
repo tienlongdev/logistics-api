@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { searchShipments } from "@/lib/api/client";
-import { shipmentStatusOptions } from "@/lib/constants/status";
+import { shipmentStatusLabel, shipmentStatusOptions } from "@/lib/constants/status";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { formatDate } from "@/lib/utils";
 import { searchFiltersSchema, type SearchFiltersSchema } from "@/lib/validation/search";
@@ -65,17 +65,17 @@ export default function SearchPage() {
     <div className="grid gap-6">
       <div className="page-header">
         <div className="space-y-3">
-          <p className="section-kicker">Search</p>
-          <h2 className="text-3xl font-semibold sm:text-4xl">Elasticsearch-powered search</h2>
-          <p className="page-copy">Advanced filters stay within the existing search endpoint and are optimized for fast keyboard entry. Use the shell shortcut to land here and focus the first field instantly.</p>
+          <p className="section-kicker">Tìm kiếm</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Tìm kiếm nâng cao</h2>
+          <p className="page-copy">Tìm kiếm đơn hàng theo mã, số điện thoại, trạng thái và ngày tạo. Dùng phím tắt để tập trung vào ô tìm kiếm ngay.</p>
         </div>
         <div className="keyboard-hint">Cmd/Ctrl + K</div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Advanced filters</CardTitle>
-          <CardDescription>Form dung react-hook-form + zod de validate va serialise query params.</CardDescription>
+          <CardTitle>Bộ lọc tìm kiếm</CardTitle>
+          <CardDescription>Lọc đơn hàng theo nhiều tiêu chí khác nhau.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={form.handleSubmit((values) => {
@@ -84,7 +84,7 @@ export default function SearchPage() {
             setFilters(values);
           })}>
             <div className="space-y-2">
-              <Label htmlFor="search-tracking">Tracking code</Label>
+              <Label htmlFor="search-tracking">Mã vận đơn</Label>
               <Input
                 id="search-tracking"
                 {...trackingField}
@@ -96,47 +96,47 @@ export default function SearchPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-shipment">Shipment code</Label>
+              <Label htmlFor="search-shipment">Mã đơn hàng</Label>
               <Input id="search-shipment" {...form.register("shipmentCode")} placeholder="SHIP-..." />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-merchant">Merchant code</Label>
+              <Label htmlFor="search-merchant">Mã đối tác</Label>
               <Input id="search-merchant" {...form.register("merchantCode")} placeholder="MERCHANT-ACME" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-phone">Receiver phone</Label>
+              <Label htmlFor="search-phone">SĐT người nhận</Label>
               <Input id="search-phone" {...form.register("receiverPhone")} placeholder="0909..." />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-status">Status</Label>
+              <Label htmlFor="search-status">Trạng thái</Label>
               <select id="search-status" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...form.register("status")}>
-                <option value="">Tat ca</option>
+                <option value="">Tất cả</option>
                 {shipmentStatusOptions.map((item) => (
-                  <option key={item} value={item}>{item}</option>
+                  <option key={item} value={item}>{shipmentStatusLabel[item]}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-from">From date</Label>
+              <Label htmlFor="search-from">Từ ngày</Label>
               <Input id="search-from" type="date" {...form.register("fromDate")} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-to">To date</Label>
+              <Label htmlFor="search-to">Đến ngày</Label>
               <Input id="search-to" type="date" {...form.register("toDate")} />
               {form.formState.errors.toDate ? <p className="text-sm text-destructive">{form.formState.errors.toDate.message}</p> : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="search-sort">Sort</Label>
+              <Label htmlFor="search-sort">Sắp xếp</Label>
               <select id="search-sort" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...form.register("sort")}>
-                <option value="updatedAt:desc">updatedAt desc</option>
-                <option value="createdAt:desc">createdAt desc</option>
-                <option value="trackingCode:asc">trackingCode asc</option>
+                <option value="updatedAt:desc">Mới nhất</option>
+                <option value="createdAt:desc">Ngày tạo (mới nhất)</option>
+                <option value="trackingCode:asc">Mã vận đơn (A→Z)</option>
               </select>
             </div>
             <div className="flex items-end gap-2 xl:col-span-4">
               <Button type="submit">
                 <Filter className="h-4 w-4" />
-                Apply filters
+                Tìm kiếm
               </Button>
               <Button type="button" variant="outline" onClick={() => {
                 form.reset(defaultFilters);
@@ -144,7 +144,7 @@ export default function SearchPage() {
                 setPage(1);
                 setSelectedShipmentId(null);
               }}>
-                Reset
+                Đặt lại
               </Button>
             </div>
           </form>
@@ -152,21 +152,21 @@ export default function SearchPage() {
       </Card>
 
       {query.isError ? (
-        <ErrorState description={query.error instanceof Error ? query.error.message : "Khong the tim kiem shipments."} onRetry={() => query.refetch()} />
+        <ErrorState description={query.error instanceof Error ? query.error.message : "Không thể thực hiện tìm kiếm."} onRetry={() => query.refetch()} />
       ) : null}
 
       {query.isLoading ? <PageLoadingState variant="list" /> : null}
 
       {query.isSuccess && query.data.items.length === 0 ? (
-        <EmptyState icon={Search} title="Khong co du lieu khop" description="Thu no wider date range hoac bo bot filter merchant / phone / status." variant="search" />
+        <EmptyState icon={Search} title="Không tìm thấy kết quả" description="Thử điều chỉnh tiêu chí lọc hoặc mở rộng khoảng thời gian." variant="search" />
       ) : null}
 
       {query.isSuccess && query.data.items.length > 0 ? (
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Search results</CardTitle>
-              <CardDescription>{query.data.total.toLocaleString("vi-VN")} ket qua tu Elasticsearch read model.</CardDescription>
+              <CardTitle>Kết quả tìm kiếm</CardTitle>
+              <CardDescription>{query.data.total.toLocaleString("vi-VN")} kết quả tìm được.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {query.data.items.map((item) => (
@@ -184,7 +184,7 @@ export default function SearchPage() {
                       </div>
                       <p className="text-sm text-muted-foreground">{item.shipmentCode} · {item.receiverName} · {item.receiverPhone}</p>
                     </div>
-                    <div className="text-sm text-muted-foreground">Updated {formatDate(item.updatedAt)}</div>
+                    <div className="text-sm text-muted-foreground">Cập nhật {formatDate(item.updatedAt)}</div>
                   </div>
                 </button>
               ))}
@@ -200,8 +200,8 @@ export default function SearchPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>Xem nhanh shipment da chon truoc khi mo detail page.</CardDescription>
+              <CardTitle>Xem trước</CardTitle>
+              <CardDescription>Xem nhanh thông tin đơn hàng trước khi mở chi tiết.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               {selectedItem ? (
@@ -215,23 +215,23 @@ export default function SearchPage() {
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Receiver</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Người nhận</p>
                       <p className="mt-1 font-medium">{selectedItem.receiverName}</p>
                       <p className="text-muted-foreground">{selectedItem.receiverPhone}</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Sender</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Người gửi</p>
                       <p className="mt-1 font-medium">{selectedItem.senderName}</p>
                       <p className="text-muted-foreground">{selectedItem.merchantCode}</p>
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Created</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Ngày tạo</p>
                       <p className="mt-1 font-medium">{formatDate(selectedItem.createdAt)}</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Updated</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Cập nhật</p>
                       <p className="mt-1 font-medium">{formatDate(selectedItem.updatedAt)}</p>
                     </div>
                   </div>
@@ -241,11 +241,11 @@ export default function SearchPage() {
                       <p className="mt-1 font-medium">{selectedItem.codAmount.toLocaleString("vi-VN")}</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Shipping fee</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Phí vận chuyển</p>
                       <p className="mt-1 font-medium">{selectedItem.shippingFee.toLocaleString("vi-VN")}</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Total fee</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Tổng phí</p>
                       <p className="mt-1 font-medium">{selectedItem.totalFee.toLocaleString("vi-VN")}</p>
                     </div>
                   </div>
@@ -267,12 +267,12 @@ export default function SearchPage() {
                         },
                       }}
                     >
-                      Mo shipment detail
+                      Xem chi tiết đơn hàng
                     </Link>
                   </Button>
                 </>
               ) : (
-                <EmptyState icon={Search} title="Chua chon shipment" description="Chon mot ket qua o cot ben trai de xem preview chi tiet." />
+                <EmptyState icon={Search} title="Chưa chọn đơn hàng" description="Chọn một kết quả ở cột bên trái để xem thông tin chi tiết." />
               )}
             </CardContent>
           </Card>

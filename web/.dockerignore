@@ -1,9 +1,16 @@
 .next
 node_modules
+.pnpm-store
+coverage
 playwright-report
 test-results
+*.log
 npm-debug.log
 pnpm-debug.log
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+.env.*.local
 .git
 .DS_Store
-coverage

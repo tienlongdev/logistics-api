@@ -17,8 +17,8 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Logistics Web",
-  description: "Modern operations console for logistics workflows.",
+  title: "Hệ thống vận chuyển",
+  description: "Quản lý đơn hàng và theo dõi vận chuyển.",
 };
 
 interface RootLayoutProps {

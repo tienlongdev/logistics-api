@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { shipmentStatusTone } from "@/lib/constants/status";
+import { shipmentStatusLabel, shipmentStatusTone } from "@/lib/constants/status";
 import type { ShipmentStatus } from "@/lib/types/api";
 
 interface StatusBadgeProps {
@@ -7,5 +7,5 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  return <Badge variant={shipmentStatusTone[status]}>{status}</Badge>;
+  return <Badge variant={shipmentStatusTone[status]}>{shipmentStatusLabel[status] ?? status}</Badge>;
 }

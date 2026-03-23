@@ -25,12 +25,11 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const accessToken = useAuthStore((state) => state.accessToken);
   const email = useAuthStore((state) => state.email);
-  const mode = useAuthStore((state) => state.mode);
   const roles = useAuthStore((state) => state.roles);
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      toast.success("Da dang xuat khoi workspace");
+      toast.success("Đã đăng xuất thành công");
     },
     onSettled: () => {
       setLogoutDialogOpen(false);
@@ -38,7 +37,7 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
     },
   });
 
-  const title = pathname.startsWith("/shipments/") ? "Shipment detail" : routeTitles[pathname] ?? "Operations";
+  const title = pathname.startsWith("/shipments/") ? "Chi tiết đơn hàng" : routeTitles[pathname] ?? "Trang chủ";
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -66,12 +65,10 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-xl font-semibold">{title}</h1>
-            {mode ? <Badge variant="success">API auth</Badge> : null}
             {roles.map((role) => (
-              <Badge key={role} variant="outline">{role}</Badge>
+              <Badge key={role} variant="outline" className="hidden sm:inline-flex">{role}</Badge>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Typed client, correlation id headers, and graceful fallbacks for backend gaps.</p>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <Button variant="outline" onClick={() => router.push("/search?focus=primary")}>
@@ -81,7 +78,7 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
           </Button>
           <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
             <SearchSlash className="h-4 w-4" />
-            <span className="max-w-40 truncate">{email ?? "No session"}</span>
+            <span className="max-w-40 truncate">{email ?? "Chưa đăng nhập"}</span>
           </div>
           <ThemeToggle />
           {accessToken ? (
@@ -100,9 +97,9 @@ export function AppTopbar({ onOpenSidebar }: AppTopbarProps) {
       <ConfirmDialog
         open={logoutDialogOpen}
         onOpenChange={setLogoutDialogOpen}
-        title="Dang xuat khoi phien lam viec?"
-        description="Frontend se xoa access token trong memory va refresh token trong session storage, sau do dua ban ve trang dang nhap."
-        confirmLabel="Dang xuat"
+        title="Đăng xuất khỏi hệ thống?"
+        description="Bạn sẽ thoát khỏi phiên làm việc hiện tại và được chuyển về trang đăng nhập."
+        confirmLabel="Đăng xuất"
         onConfirm={() => logoutMutation.mutate()}
         pending={logoutMutation.isPending}
         tone="destructive"

@@ -36,8 +36,11 @@ export function LoginForm() {
         email: values.email,
         mode: "api",
       });
-      toast.success("Dang nhap thanh cong");
+      toast.success("Đăng nhập thành công!");
       router.push("/shipments");
+    },
+    onError: () => {
+      toast.error("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
     },
   });
 
@@ -47,22 +50,22 @@ export function LoginForm() {
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <ShieldCheck className="h-6 w-6" />
         </div>
-        <CardTitle>Dang nhap vao Logistics Web</CardTitle>
+        <CardTitle>Đăng nhập</CardTitle>
         <CardDescription>
-          Form nay goi thang `POST /api/v1/auth/login`. Access token duoc giu trong memory, refresh token duoc luu tam trong session storage vi backend chua set httpOnly cookie.
+          Nhập email và mật khẩu để truy cập hệ thống quản lý vận chuyển.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Địa chỉ email</Label>
             <Input id="email" type="email" autoComplete="email" aria-invalid={Boolean(form.formState.errors.email)} {...form.register("email")} />
             {form.formState.errors.email ? (
               <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Mật khẩu</Label>
             <Input
               id="password"
               type="password"
@@ -75,8 +78,8 @@ export function LoginForm() {
             ) : null}
           </div>
           <Button type="submit" className="w-full" disabled={mutation.isPending}>
-            {mutation.isPending ? "Dang xu ly..." : "Dang nhap"}
-            <ArrowRight className="h-4 w-4" />
+            {mutation.isPending ? "Đang xử lý..." : "Đăng nhập"}
+            {!mutation.isPending && <ArrowRight className="h-4 w-4" />}
           </Button>
         </form>
       </CardContent>

@@ -12,17 +12,17 @@ export default function NotFound() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
             <Compass className="h-6 w-6" />
           </div>
-          <CardTitle>Khong tim thay trang</CardTitle>
-          <CardDescription>Route nay khong ton tai hoac da duoc doi. Chon mot diem bat dau on dinh ben duoi.</CardDescription>
+          <CardTitle>Không tìm thấy trang</CardTitle>
+          <CardDescription>Trang bạn đang tìm không tồn tại hoặc đã được dời đi. Vui lòng quay về trang chủ.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row">
           <Button asChild>
-            <Link href="/dashboard">Ve dashboard</Link>
+            <Link href="/dashboard">Quay về trang chủ</Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/search">
               <Search className="h-4 w-4" />
-              Mo search
+              Tìm kiếm đơn hàng
             </Link>
           </Button>
         </CardContent>
