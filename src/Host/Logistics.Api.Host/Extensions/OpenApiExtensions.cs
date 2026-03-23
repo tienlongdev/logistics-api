@@ -1,4 +1,3 @@
-using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
@@ -35,6 +34,12 @@ public static class OpenApiExtensions
         app.MapScalarApiReference(options =>
         {
             options.WithTitle("Logistics API");
+        });
+
+        app.UseSwaggerUI(options =>
+        {
+            options.RoutePrefix = "swagger";
+            options.SwaggerEndpoint("/openapi/v1.json", "Logistics API v1");
         });
 
         return app;

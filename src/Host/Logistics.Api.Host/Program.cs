@@ -32,14 +32,17 @@ builder.Host.UseSerilog();
 // ============================================================
 // Options
 // ============================================================
-var correlationOptions = builder.Configuration.GetSection(CorrelationIdOptions.SectionName).Get<CorrelationIdOptions>()
-    ?? new CorrelationIdOptions();
+var correlationOptions = builder.Configuration
+    .GetSection(CorrelationIdOptions.SectionName)
+    .Get<CorrelationIdOptions>() ?? new CorrelationIdOptions();
 
-var otelOptions = builder.Configuration.GetSection(OpenTelemetryOptions.SectionName).Get<OpenTelemetryOptions>()
-    ?? new OpenTelemetryOptions();
+var otelOptions = builder.Configuration
+    .GetSection(OpenTelemetryOptions.SectionName)
+    .Get<OpenTelemetryOptions>() ?? new OpenTelemetryOptions();
 
-var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
-    ?? throw new InvalidOperationException("Missing Jwt configuration section.");
+var jwtOptions = builder.Configuration
+    .GetSection(JwtOptions.SectionName)
+    .Get<JwtOptions>() ?? throw new InvalidOperationException("Missing Jwt configuration section.");
 
 // ============================================================
 // Services
@@ -53,15 +56,21 @@ builder.Services.AddSingleton(correlationOptions);
 builder.Services.AddTransient<CorrelationIdMiddleware>();
 
 builder.Services.AddApiVersioningWithExplorer();
+
+// OpenAPI / Swagger
 builder.Services.AddOpenApiWithVersioning();
 
-builder.Services.AddBasicRateLimiting(builder.Configuration);
+// Nếu extension hiện tại chưa đủ, bật thêm 2 dòng dưới:
+// builder.Services.AddEndpointsApiExplorer();
+// builder.Services.AddSwaggerGen();
 
+builder.Services.AddBasicRateLimiting(builder.Configuration);
 builder.Services.AddInfrastructureHealthChecks(builder.Configuration);
 
 // OpenTelemetry
 builder.Services.AddOpenTelemetryTracing(otelOptions);
-// ── Redis distributed cache (used by idempotency store + future caching) ─────
+
+// Redis distributed cache
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
@@ -75,7 +84,8 @@ else
 {
     builder.Services.AddDistributedMemoryCache();
 }
-// ── Modules ──────────────────────────────────────────────────────────────────
+
+// Modules
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddMerchantsModule(builder.Configuration);
 builder.Services.AddNotificationsModule(builder.Configuration);
@@ -83,10 +93,10 @@ builder.Services.AddPricingModule(builder.Configuration);
 builder.Services.AddSearchModule(builder.Configuration);
 builder.Services.AddShipmentsModule(builder.Configuration);
 
-// ── MediatR pipeline behaviors (global, registered after all module handlers) ─
+// MediatR pipeline behaviors
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationPipelineBehavior<,>));
 
-// ── JWT Authentication ────────────────────────────────────────────────────────
+// JWT Authentication
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
@@ -104,7 +114,7 @@ builder.Services
         };
     });
 
-// ── RBAC Authorization Policies (B2) ─────────────────────────────────────────
+// RBAC Authorization Policies
 builder.Services.AddAuthorization(opts =>
 {
     opts.AddPolicy("AdminOnly", p => p.RequireRole(Role.Names.Admin));
@@ -132,16 +142,21 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Log environment để debug
+Log.Information("Environment: {Environment}", app.Environment.EnvironmentName);
+
+// Map controllers
 app.MapControllers();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApiEndpoints();
-}
+// Map OpenAPI / Swagger cho mọi environment local/container
+app.MapOpenApiEndpoints();
+
+// Nếu extension của bạn không map UI thật, dùng thêm:
+// app.UseSwagger();
+// app.UseSwaggerUI();
 
 app.MapHealthCheckEndpoints();
 
 app.Run();
 
 public partial class Program { }
-

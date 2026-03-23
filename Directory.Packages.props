@@ -1,0 +1,6 @@
+<Project>
+	<PropertyGroup>
+		<MicrosoftAspNetCoreOpenApiVersion>10.0.5</MicrosoftAspNetCoreOpenApiVersion>
+		<SwashbuckleAspNetCoreVersion>10.1.5</SwashbuckleAspNetCoreVersion>
+	</PropertyGroup>
+</Project>

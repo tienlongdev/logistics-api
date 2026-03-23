@@ -183,10 +183,16 @@ dotnet run --project src/Host/Logistics.Api.Host
 
 | Tool    | URL                    |
 | ------- | ---------------------- |
-| API     | http://localhost:5000  |
+| API     | http://localhost:5080  |
 | Seq     | http://localhost:5341  |
 | Jaeger  | http://localhost:16686 |
 | Grafana | http://localhost:3000  |
+
+### 5. API Docs
+
+* Scalar: `/scalar/v1`
+* Swagger: `/swagger`
+* OpenAPI JSON: `/openapi/v1.json`
 
 ---
 

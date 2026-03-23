@@ -1,5 +1,6 @@
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using RabbitMQ.Client;
 
 namespace Logistics.Api.Host.Extensions;
@@ -86,7 +87,28 @@ public static class HealthChecksExtensions
         }
 
         if (!string.IsNullOrWhiteSpace(elastic))
-            hc.AddElasticsearch(elastic, name: "elasticsearch");
+        {
+            var elasticHealthUrl = $"{elastic.TrimEnd('/')}/_cluster/health";
+
+            hc.AddAsyncCheck(
+                "elasticsearch",
+                async cancellationToken =>
+                {
+                    try
+                    {
+                        using var httpClient = new HttpClient();
+                        using var response = await httpClient.GetAsync(elasticHealthUrl, cancellationToken);
+
+                        return response.IsSuccessStatusCode
+                            ? HealthCheckResult.Healthy()
+                            : HealthCheckResult.Unhealthy($"Elasticsearch returned HTTP {(int)response.StatusCode}.");
+                    }
+                    catch (Exception exception)
+                    {
+                        return HealthCheckResult.Unhealthy(exception.Message, exception);
+                    }
+                });
+        }
 
         return services;
     }

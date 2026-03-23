@@ -1,8 +1,4 @@
 # Override cho local development
 # File này không commit secrets thật vào repo
 
-services:
-  # Dùng DB dev riêng khi chạy local
-  postgres:
-    environment:
-      POSTGRES_DB: logistics_db_dev
+services: {}

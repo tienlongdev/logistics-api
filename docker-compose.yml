@@ -296,6 +296,39 @@ services:
     networks:
       - logistics_net
 
+  logistics-api-host:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: logistics_api_host
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=logistics_db;Username=logistics_user;Password=logistics_pass;"
+      ConnectionStrings__Redis: "redis:6379,password=redis_pass,abortConnect=false"
+      ConnectionStrings__RabbitMQ: "amqp://logistics_user:logistics_pass@rabbitmq:5672/logistics_vhost"
+      ConnectionStrings__Elasticsearch: "http://elasticsearch:9200"
+      OpenTelemetry__OtlpEndpoint: "http://jaeger:4317"
+    ports:
+      - "5080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - logistics_net
+
 # =============================================
 # Volumes
 # Dùng để giữ dữ liệu bền vững giữa các lần restart container
