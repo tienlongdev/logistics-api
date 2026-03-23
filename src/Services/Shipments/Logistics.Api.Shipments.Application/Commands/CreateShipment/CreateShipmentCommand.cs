@@ -27,6 +27,7 @@ public sealed record PackageDto(
 /// </summary>
 public sealed record CreateShipmentCommand(
     Guid RequestingUserId,
+    Guid? CorrelationId,
     string? IdempotencyKey,
     string? MerchantOrderRef,
     ServiceType ServiceType,

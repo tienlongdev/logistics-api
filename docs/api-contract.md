@@ -122,6 +122,7 @@ Response
   "shipmentCode": "SHIP-20260323-0001",
   "currentStatus": "Created",
   "shippingFee": 35000,
+  "codFee": 0,
   "totalFee": 35000,
   "createdAt": "2026-03-23T10:00:00Z"
 }
@@ -142,11 +143,17 @@ Request
 Response: shipment summary
 
 ### POST `/api/v1/shipments/{id}/status-transitions`
+Auth:
+- `Authorization: Bearer <jwt>`
+- Role: `HubStaff`, `Operator`, or `Admin`
+
 Request
 ```json
 {
   "toStatus": "PickedUp",
+  "hubId": "uuid-or-null",
   "hubCode": "HUB-HCM-001",
+  "location": "Thu Duc, HCM",
   "note": "Đã lấy hàng",
   "occurredAt": "2026-03-23T11:00:00Z"
 }
@@ -159,7 +166,8 @@ Response
   "trackingCode": "LGA2603000001",
   "fromStatus": "AwaitingPickup",
   "toStatus": "PickedUp",
-  "occurredAt": "2026-03-23T11:00:00Z"
+  "occurredAt": "2026-03-23T11:00:00Z",
+  "currentStatus": "PickedUp"
 }
 ```
 
@@ -168,16 +176,22 @@ Response
 ## 3. Tracking (public)
 
 ### GET `/api/v1/tracking/{trackingCode}`
+Auth: none
+
 Response
 ```json
 {
   "trackingCode": "LGA2603000001",
+  "shipmentCode": "SHIP-20260323-0001",
   "currentStatus": "InTransit",
+  "receiverName": "Trần Thị B",
   "lastUpdatedAt": "2026-03-23T14:00:00Z"
 }
 ```
 
 ### GET `/api/v1/tracking/{trackingCode}/timeline`
+Auth: none
+
 Response
 ```json
 {
@@ -188,12 +202,16 @@ Response
       "fromStatus": null,
       "toStatus": "Created",
       "hubCode": null,
+      "location": null,
       "note": "Tạo đơn",
       "occurredAt": "2026-03-23T10:00:00Z"
     }
   ]
 }
 ```
+
+Notes:
+- Timeline is append-only and immutable; events are returned oldest → newest.
 
 ---
 

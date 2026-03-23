@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Logistics.Api.Shipments.Application\Logistics.Api.Shipments.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Infrastructure\Logistics.Api.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Contracts\Logistics.Api.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -21,6 +21,11 @@ internal sealed class ShipmentRepository : IShipmentRepository
             .Include(s => s.TrackingEvents)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
+    public Task<Shipment?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct = default) =>
+        _context.Shipments
+            .Include(s => s.TrackingEvents)
+            .FirstOrDefaultAsync(s => s.TrackingCode == trackingCode, ct);
+
     public Task<Shipment?> GetByIdempotencyKeyAsync(string idempotencyKey, CancellationToken ct = default) =>
         _context.Shipments
             .FirstOrDefaultAsync(s => s.IdempotencyKey == idempotencyKey, ct);
