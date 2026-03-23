@@ -9,32 +9,32 @@ import {
 export const appNavigation = [
   {
     href: "/dashboard",
-    label: "Dashboard",
-    description: "Tong quan luong don va muc suc khoe van hanh.",
+    label: "Tổng quan",
+    description: "Xem tổng hợp tình trạng đơn hàng đang hoạt động.",
     icon: Gauge,
   },
   {
     href: "/shipments",
-    label: "Shipments",
-    description: "Quan sat danh sach don va chi phi COD.",
+    label: "Đơn hàng",
+    description: "Tìm kiếm và quản lý danh sách đơn vận chuyển.",
     icon: PackageSearch,
   },
   {
     href: "/tracking",
-    label: "Tracking",
-    description: "Tra cuu hanh trinh theo tracking code.",
+    label: "Tra cứu",
+    description: "Theo dõi hành trình giao hàng theo mã vận đơn.",
     icon: Route,
   },
   {
     href: "/search",
-    label: "Search",
-    description: "Tim kiem nang cao tren Elasticsearch.",
+    label: "Tìm kiếm",
+    description: "Tìm kiếm nâng cao theo nhiều tiêu chí lọc.",
     icon: Search,
   },
   {
     href: "/settings",
-    label: "Settings",
-    description: "Cau hinh giao dien, canh bao va profile.",
+    label: "Cài đặt",
+    description: "Tuỳ chỉnh giao diện và thông tin cá nhân.",
     icon: Settings,
   },
 ] as const;

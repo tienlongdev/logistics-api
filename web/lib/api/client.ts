@@ -1,3 +1,4 @@
+import { buildApiUrl } from "@/lib/api/base";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { shipmentStatusValueMap } from "@/lib/constants/status";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -14,8 +15,6 @@ import {
     type TransitionShipmentStatusResponse,
 } from "@/lib/types/api";
 import { toast } from "sonner";
-
-const DEFAULT_API_BASE_URL = "http://localhost:5080";
 
 let refreshPromise: Promise<string | null> | null = null;
 
@@ -40,27 +39,6 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   retryOnUnauthorized?: boolean;
   suppressToast?: boolean;
   token?: string | null;
-}
-
-function getApiBaseUrl() {
-  const configured = (process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL).replace(/\/+$/, "");
-
-  return configured.endsWith("/api/v1") ? configured : `${configured}/api/v1`;
-}
-
-function buildUrl(path: string, query?: Record<string, QueryValue>) {
-  const normalizedPath = path.replace(/^\//, "");
-  const url = new URL(normalizedPath, `${getApiBaseUrl()}/`);
-
-  if (query) {
-    Object.entries(query).forEach(([key, value]) => {
-      if (value !== undefined && value !== "") {
-        url.searchParams.set(key, String(value));
-      }
-    });
-  }
-
-  return url.toString();
 }
 
 function createCorrelationId() {
@@ -89,7 +67,7 @@ function normalizeError(error: unknown) {
 
   if (error instanceof TypeError) {
     return new ApiError(
-      "Backend not available. Start the API on http://localhost:5080 and retry.",
+      "Backend not available. Start the API stack and verify the configured API base URLs.",
       503,
     );
   }
@@ -153,7 +131,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   try {
     const accessToken = token !== undefined ? token : auth ? useAuthStore.getState().accessToken : null;
-    const response = await fetch(buildUrl(path, query), {
+    const response = await fetch(buildApiUrl(path, query), {
       ...init,
       body:
         body === undefined || body instanceof FormData || typeof body === "string"

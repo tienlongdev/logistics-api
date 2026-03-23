@@ -28,7 +28,8 @@ Frontend dashboard moi cho repo logistics, duoc dat rieng tai `/web` va khong ca
 Tao file `.env.local` tu `.env.example` neu can override:
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5080
+API_INTERNAL_BASE_URL=http://localhost:5080
 NEXT_PUBLIC_ENABLE_MOCK_FALLBACK=true
 ```
 
@@ -62,22 +63,22 @@ corepack pnpm test:e2e
 
 ## Docker
 
-Build image:
+Chay cung backend tu root compose:
 
 ```bash
-docker build -t logistics-web ./web
-docker run --rm -p 3000:3000 \
-	-e NEXT_PUBLIC_API_BASE_URL=http://host.docker.internal:5080/api/v1 \
-	logistics-web
+docker compose up -d --build
 ```
 
-Compose:
+Mo frontend tai:
 
 ```bash
-docker compose -f web/compose.yaml up --build
+http://localhost:3001
 ```
 
-Compose file da map `NEXT_PUBLIC_API_BASE_URL` toi backend local mac dinh. Dieu chinh bien moi truong neu backend chay o host/port khac.
+Trong stack nay:
+
+- Browser/client calls di qua `NEXT_PUBLIC_API_BASE_URL=http://localhost:5080`
+- Server-side fetch trong Next.js uu tien `API_INTERNAL_BASE_URL=http://logistics_api_host:8080`, neu khong co thi fallback sang `NEXT_PUBLIC_API_BASE_URL`
 
 ## Notes ve backend contract
 

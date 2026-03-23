@@ -8,7 +8,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { BackendNotAvailable } from "@/components/feedback/backend-not-available";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { PageLoadingState } from "@/components/feedback/page-loading-state";
@@ -18,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { searchShipments } from "@/lib/api/client";
-import { shipmentStatusOptions } from "@/lib/constants/status";
+import { shipmentStatusLabel, shipmentStatusOptions } from "@/lib/constants/status";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { formatCurrency, formatDate, isUuid } from "@/lib/utils";
 import { shipmentFiltersSchema, type ShipmentFiltersSchema } from "@/lib/validation/shipments";
@@ -93,27 +92,22 @@ export default function ShipmentsPage() {
     <div className="grid gap-6">
       <div className="page-header">
         <div className="space-y-3">
-          <p className="section-kicker">Shipments</p>
-          <h2 className="text-3xl font-semibold sm:text-4xl">Merchant shipment workspace</h2>
-          <p className="page-copy">This screen keeps using the implemented search endpoint as the list read model until dedicated merchant shipment listing APIs are available.</p>
+          <p className="section-kicker">Đơn hàng</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">Danh sách đơn hàng</h2>
+          <p className="page-copy">Tìm kiếm và theo dõi tất cả đơn vận chuyển của bạn.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => codeInputRef.current?.focus()}>
             <Search className="h-4 w-4" />
-            Focus code filter
+            Tìm theo mã
           </Button>
         </div>
       </div>
 
-      <BackendNotAvailable
-        description="Dedicated shipment list/detail/cancel APIs are still missing in backend. UI nay dung search endpoint cho danh sach va tracking endpoints cho timeline."
-        todo="TODO: docs/tasks.md items E5 and E3 can bo sung `GET /api/v1/shipments`, `GET /api/v1/shipments/{id}`, `GET /api/v1/shipments/by-tracking/{trackingCode}`, va `POST /api/v1/shipments/{id}/cancel`."
-      />
-
       <Card>
         <CardHeader>
-          <CardTitle>Quick filters</CardTitle>
-          <CardDescription>Filter by tracking or shipment code, receiver phone, date range, and status on the current backend search contract.</CardDescription>
+          <CardTitle>Lọc đơn hàng</CardTitle>
+          <CardDescription>Tìm kiếm theo mã vận đơn, số điện thoại, ngày gửi và trạng thái.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -124,10 +118,10 @@ export default function ShipmentsPage() {
             })}
           >
             <div className="space-y-2 xl:col-span-2">
-              <Label htmlFor="code-filter">Code</Label>
+              <Label htmlFor="code-filter">Mã vận đơn / Mã đơn hàng</Label>
               <Input
                 id="code-filter"
-                placeholder="Tracking code hoac shipment code"
+                placeholder="Nhập mã vận đơn hoặc mã đơn..."
                 {...codeField}
                 ref={(node) => {
                   codeField.ref(node);
@@ -136,35 +130,35 @@ export default function ShipmentsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="receiver-phone">Receiver phone</Label>
+              <Label htmlFor="receiver-phone">SĐT người nhận</Label>
               <Input id="receiver-phone" placeholder="0909..." {...form.register("receiverPhone")} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="status-filter">Status</Label>
+              <Label htmlFor="status-filter">Trạng thái</Label>
               <select id="status-filter" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...form.register("status")}>
-                <option value="">Tat ca</option>
+                <option value="">Tất cả</option>
                 {shipmentStatusOptions.map((item) => (
-                  <option key={item} value={item}>{item}</option>
+                  <option key={item} value={item}>{shipmentStatusLabel[item]}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="from-date">From date</Label>
+              <Label htmlFor="from-date">Từ ngày</Label>
               <Input id="from-date" type="date" {...form.register("fromDate")} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="to-date">To date</Label>
+              <Label htmlFor="to-date">Đến ngày</Label>
               <Input id="to-date" type="date" {...form.register("toDate")} />
               {form.formState.errors.toDate ? <p className="text-sm text-destructive">{form.formState.errors.toDate.message}</p> : null}
             </div>
             <div className="flex items-end gap-2 xl:col-span-5">
-              <Button type="submit">Apply filters</Button>
+              <Button type="submit">Áp dụng bộ lọc</Button>
               <Button type="button" variant="outline" onClick={() => {
                 form.reset(defaultFilters);
                 setFilters(defaultFilters);
                 setPage(1);
               }}>
-                Reset filters
+                Đặt lại
               </Button>
             </div>
           </form>
@@ -173,16 +167,16 @@ export default function ShipmentsPage() {
 
       {query.isLoading ? <PageLoadingState variant="list" /> : null}
       {query.isError ? (
-        <ErrorState description={query.error instanceof Error ? query.error.message : "Khong the tai shipments."} onRetry={() => query.refetch()} />
+        <ErrorState description={query.error instanceof Error ? query.error.message : "Không thể tải danh sách đơn hàng."} onRetry={() => query.refetch()} />
       ) : null}
       {query.isSuccess && query.data.items.length === 0 ? (
-        <EmptyState icon={PackageSearch} title="Khong co ket qua" description="Thu bo bot filter hoac doi backend search indexing them du lieu." variant="shipments" />
+        <EmptyState icon={PackageSearch} title="Không tìm thấy đơn hàng nào" description="Thử điều chỉnh bộ lọc hoặc kiểm tra lại thông tin tìm kiếm." variant="shipments" />
       ) : null}
       {query.isSuccess && query.data.items.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Shipment list</CardTitle>
-            <CardDescription>{query.data.total.toLocaleString("vi-VN")} ket qua. Desktop dung bang, mobile dung stacked cards de giu kha nang doc nhanh.</CardDescription>
+            <CardTitle>Kết quả</CardTitle>
+            <CardDescription>{query.data.total.toLocaleString("vi-VN")} đơn hàng.</CardDescription>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <div className="grid gap-3 md:hidden">
@@ -220,7 +214,7 @@ export default function ShipmentsPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Created</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Ngày tạo</p>
                         <p className="mt-1 font-medium">{formatDate(item.createdAt)}</p>
                       </div>
                       <div>
@@ -228,7 +222,7 @@ export default function ShipmentsPage() {
                         <p className="mt-1 font-medium">{formatCurrency(item.codAmount)}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Fee</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Phí</p>
                         <p className="mt-1 font-medium">{formatCurrency(item.totalFee)}</p>
                       </div>
                     </div>
@@ -239,13 +233,13 @@ export default function ShipmentsPage() {
             <table className="data-table hidden md:table">
               <thead>
                 <tr>
-                  <th>Tracking</th>
-                  <th>Shipment code</th>
-                  <th>Receiver</th>
-                  <th>Status</th>
-                  <th>Created</th>
+                  <th>Mã vận đơn</th>
+                  <th>Mã đơn hàng</th>
+                  <th>Người nhận</th>
+                  <th>Trạng thái</th>
+                  <th>Ngày tạo</th>
                   <th>COD</th>
-                  <th>Fee</th>
+                  <th>Phí giao</th>
                 </tr>
               </thead>
               <tbody>

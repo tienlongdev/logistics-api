@@ -38,9 +38,9 @@ export function AuthGate({ children }: AuthGateProps) {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
               <LockKeyhole className="h-6 w-6" />
             </div>
-            <CardTitle>Restoring session</CardTitle>
+            <CardTitle>Đang khôi phục phiên đăng nhập</CardTitle>
             <CardDescription>
-              Access token chi duoc giu trong memory. Frontend dang dung refresh token tam thoi trong session storage de khoi phuc phien dang nhap.
+              Vui lòng chờ trong giây lát...
             </CardDescription>
           </CardHeader>
         </Card>
@@ -56,14 +56,14 @@ export function AuthGate({ children }: AuthGateProps) {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
               <LockKeyhole className="h-6 w-6" />
             </div>
-            <CardTitle>Authentication required</CardTitle>
+            <CardTitle>Yêu cầu đăng nhập</CardTitle>
             <CardDescription>
-              Route nay goi endpoint can bearer token. Dang nhap de frontend co the su dung `POST /api/v1/auth/login` va tu dong refresh khi gap `401`.
+              Bạn cần đăng nhập để xem trang này.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/login">Di den trang dang nhap</Link>
+              <Link href="/login">Đăng nhập</Link>
             </Button>
           </CardContent>
         </Card>

@@ -9,7 +9,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { BackendNotAvailable } from "@/components/feedback/backend-not-available";
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
@@ -25,7 +24,7 @@ import {
     getTrackingTimeline,
     transitionShipmentStatus,
 } from "@/lib/api/client";
-import { privilegedRoles, shipmentStatusOptions } from "@/lib/constants/status";
+import { privilegedRoles, shipmentStatusLabel, shipmentStatusOptions } from "@/lib/constants/status";
 import { useAuthStore } from "@/lib/store/auth-store";
 import type { ShipmentStatus } from "@/lib/types/api";
 import { formatCurrency, formatDate, isUuid } from "@/lib/utils";
@@ -103,7 +102,7 @@ export default function ShipmentDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["shipment-detail", "tracking-timeline", trackingCode] }),
       ]);
       setConfirmOpen(false);
-      toast.success("Da cap nhat trang thai shipment");
+      toast.success("Đã cập nhật trạng thái đơn hàng");
     },
   });
 
@@ -117,30 +116,22 @@ export default function ShipmentDetailPage() {
           <Button asChild variant="ghost" className="w-fit px-0 text-muted-foreground">
             <Link href="/shipments">
               <ArrowLeft className="h-4 w-4" />
-              Quay lai shipments
+              Quay lại danh sách đơn hàng
             </Link>
           </Button>
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Shipment detail</p>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Chi tiết đơn hàng</p>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <h2 className="text-3xl font-semibold">{trackingCode ?? routeId}</h2>
               {currentStatus ? <StatusBadge status={currentStatus} /> : null}
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Shipment detail API chua duoc implement. Trang nay ket hop real tracking endpoints voi preview data co san tu search read model.
-            </p>
           </div>
         </div>
       </div>
 
-      <BackendNotAvailable
-        description="Missing `GET /api/v1/shipments/{id}` and `GET /api/v1/shipments/by-tracking/{trackingCode}` in backend."
-        todo="TODO: follow docs/tasks.md item E5 to implement shipment query APIs, then replace search-parameter preview blocks with real shipment detail DTOs."
-      />
-
       {summaryQuery.isError || timelineQuery.isError ? (
         <ErrorState
-          description={(summaryQuery.error ?? timelineQuery.error) instanceof Error ? (summaryQuery.error ?? timelineQuery.error)?.message ?? "Khong the tai shipment tracking." : "Khong the tai shipment tracking."}
+          description={(summaryQuery.error ?? timelineQuery.error) instanceof Error ? (summaryQuery.error ?? timelineQuery.error)?.message ?? "Không thể tải thông tin vận đơn." : "Không thể tải thông tin vận đơn."}
           onRetry={() => {
             void summaryQuery.refetch();
             void timelineQuery.refetch();
@@ -156,9 +147,9 @@ export default function ShipmentDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Route className="h-5 w-5 text-primary" />
-                Tracking timeline
+                Hành trình vận chuyển
               </CardTitle>
-              <CardDescription>Public tracking endpoints duoc dung lam timeline chinh cho shipment detail.</CardDescription>
+              <CardDescription>Lịch sử hành trình giao hàng theo thời gian.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {timelineQuery.data?.events.length ? (
@@ -173,13 +164,13 @@ export default function ShipmentDetailPage() {
                         <StatusBadge status={event.toStatus} />
                         <span className="text-sm text-muted-foreground">{formatDate(event.occurredAt)}</span>
                       </div>
-                      <p className="mt-2 text-sm">{event.note ?? "Khong co ghi chu"}</p>
-                      <p className="mt-2 text-xs text-muted-foreground">{event.location ?? event.hubCode ?? "No hub data"}</p>
+                      <p className="mt-2 text-sm">{event.note ?? "Không có ghi chú"}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">{event.location ?? event.hubCode ?? "Không có thông tin vị trí"}</p>
                     </div>
                   </div>
                 ))
               ) : timelineQuery.isSuccess ? (
-                <EmptyState icon={Route} title="Chua co timeline" description="Backend tracking co summary nhung chua tra event nao." variant="tracking" />
+                <EmptyState icon={Route} title="Chưa có hành trình" description="Đơn hàng chưa có sự kiện vận chuyển nào." variant="tracking" />
               ) : null}
             </CardContent>
           </Card>
@@ -189,20 +180,20 @@ export default function ShipmentDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <UserRound className="h-4 w-4 text-primary" />
-                  Sender / Receiver
+                  Người gửi / Người nhận
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Sender</p>
-                  <p className="mt-1 font-medium">{senderName ?? "Backend not available"}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Người gửi</p>
+                  <p className="mt-1 font-medium">{senderName ?? "Đang tải..."}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Receiver</p>
-                  <p className="mt-1 font-medium">{summaryQuery.data?.receiverName ?? receiverName ?? "Backend not available"}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Người nhận</p>
+                  <p className="mt-1 font-medium">{summaryQuery.data?.receiverName ?? receiverName ?? "Đang tải..."}</p>
                   <p className="mt-1 flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-3.5 w-3.5" />
-                    {receiverPhone ?? "Backend not available"}
+                    {receiverPhone ?? "Đang tải..."}
                   </p>
                 </div>
               </CardContent>
@@ -212,27 +203,22 @@ export default function ShipmentDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Package2 className="h-4 w-4 text-primary" />
-                  Package / Fees
+                  Thông tin đơn hàng
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Package</p>
-                  <p className="mt-1 font-medium text-muted-foreground">Backend not available</p>
-                  <p className="mt-1 text-muted-foreground">TODO: docs/tasks.md E5 can mo rong DTO de co weight, dimensions, description.</p>
-                </div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <div className="rounded-2xl bg-accent/60 p-3">
                     <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">COD</p>
-                    <p className="mt-1 font-medium">{codAmount !== null ? formatCurrency(codAmount) : "Backend not available"}</p>
+                    <p className="mt-1 font-medium">{codAmount !== null ? formatCurrency(codAmount) : "—"}</p>
                   </div>
                   <div className="rounded-2xl bg-accent/60 p-3">
-                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Shipping fee</p>
-                    <p className="mt-1 font-medium">{shippingFee !== null ? formatCurrency(shippingFee) : "Backend not available"}</p>
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Phí giao</p>
+                    <p className="mt-1 font-medium">{shippingFee !== null ? formatCurrency(shippingFee) : "—"}</p>
                   </div>
                   <div className="rounded-2xl bg-accent/60 p-3">
-                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Total fee</p>
-                    <p className="mt-1 font-medium">{totalFee !== null ? formatCurrency(totalFee) : "Backend not available"}</p>
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Tổng phí</p>
+                    <p className="mt-1 font-medium">{totalFee !== null ? formatCurrency(totalFee) : "—"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -243,68 +229,58 @@ export default function ShipmentDetailPage() {
         <div className="grid gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Shipment snapshot</CardTitle>
-              <CardDescription>Du lieu co the doc duoc ngay tu tracking va search response.</CardDescription>
+              <CardTitle>Thông tin vận đơn</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Shipment code</span>
-                <span className="text-right font-medium">{summaryQuery.data?.shipmentCode ?? shipmentCode ?? "Backend not available"}</span>
+                <span className="text-muted-foreground">Mã đơn hàng</span>
+                <span className="text-right font-medium">{summaryQuery.data?.shipmentCode ?? shipmentCode ?? "—"}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Created at</span>
-                <span className="text-right font-medium">{createdAt ? formatDate(createdAt) : "Backend not available"}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Status source</span>
-                <span className="text-right font-medium">{summaryQuery.data ? "Tracking API" : "Search preview"}</span>
+                <span className="text-muted-foreground">Ngày tạo</span>
+                <span className="text-right font-medium">{createdAt ? formatDate(createdAt) : "—"}</span>
               </div>
             </CardContent>
           </Card>
 
-          <BackendNotAvailable
-            description="`POST /api/v1/shipments/{id}/cancel` chua ton tai trong backend hien tai."
-            todo="TODO: docs/tasks.md item E3 can them dedicated cancel endpoint; tam thoi chi co status transition endpoint tong quat o backend."
-          />
-
           {canTransitionStatus ? (
             <Card>
               <CardHeader>
-                <CardTitle>Status update</CardTitle>
-                <CardDescription>Form nay goi POST /api/v1/shipments/:id/status-transitions va chi hien khi token co role HubStaff, Operator hoac Admin.</CardDescription>
+                <CardTitle>Cập nhật trạng thái</CardTitle>
+                <CardDescription>Chỉ dành cho nhân viên vận hành có quyền Hủ đơn / Tiếp nhận / Quản trị.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form className="grid gap-4" onSubmit={transitionForm.handleSubmit(() => setConfirmOpen(true))}>
                   <div className="space-y-2">
-                    <Label htmlFor="toStatus">To status</Label>
+                    <Label htmlFor="toStatus">Trạng thái mới</Label>
                     <select
                       id="toStatus"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       {...transitionForm.register("toStatus")}
                     >
                       {shipmentStatusOptions.map((status) => (
-                        <option key={status} value={status}>{status}</option>
+                        <option key={status} value={status}>{shipmentStatusLabel[status]}</option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hubCode">Hub code</Label>
+                    <Label htmlFor="hubCode">Mã hub</Label>
                     <Input id="hubCode" placeholder="HUB-HCM-001" {...transitionForm.register("hubCode")} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input id="location" placeholder="Thu Duc, HCM" {...transitionForm.register("location")} />
+                    <Label htmlFor="location">Vị trí</Label>
+                    <Input id="location" placeholder="Thủ Đức, TP.HCM" {...transitionForm.register("location")} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="occurredAt">Occurred at</Label>
+                    <Label htmlFor="occurredAt">Thời điểm xảy ra</Label>
                     <Input id="occurredAt" type="datetime-local" {...transitionForm.register("occurredAt")} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="note">Note</Label>
-                    <Textarea id="note" placeholder="Da lay hang" {...transitionForm.register("note")} />
+                    <Label htmlFor="note">Ghi chú</Label>
+                    <Textarea id="note" placeholder="Nhập ghi chú..." {...transitionForm.register("note")} />
                   </div>
                   <Button type="submit" disabled={transitionMutation.isPending}>
-                    {transitionMutation.isPending ? "Dang cap nhat..." : "Cap nhat trang thai"}
+                    {transitionMutation.isPending ? "Đang cập nhật..." : "Cập nhật trạng thái"}
                   </Button>
                 </form>
               </CardContent>
@@ -312,27 +288,27 @@ export default function ShipmentDetailPage() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Status update</CardTitle>
+                <CardTitle>Cập nhật trạng thái</CardTitle>
                 <CardDescription>
-                  Endpoint status transition co san, nhung UI chi cho phep goi khi co shipment id UUID va token mang role `HubStaff`, `Operator` hoac `Admin`.
+                  Chức năng này chỉ dành cho nhân viên vận hành hợp lệ (HubStaff, Operator, Admin).
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Mo shipment detail tu bang shipments/search de co `shipmentId`, sau do dang nhap bang tai khoan van hanh co quyen phu hop.
+                  Liên hệ quản trị để được cấp quyền cập nhật trạng thái đơn hàng.
                 </p>
               </CardContent>
             </Card>
           )}
 
           {transitionMutation.isError ? (
-            <ErrorState description={transitionMutation.error instanceof Error ? transitionMutation.error.message : "Khong the cap nhat trang thai."} onRetry={() => transitionForm.handleSubmit((values) => transitionMutation.mutate(values))()} />
+            <ErrorState description={transitionMutation.error instanceof Error ? transitionMutation.error.message : "Không thể cập nhật trạng thái."} onRetry={() => transitionForm.handleSubmit((values) => transitionMutation.mutate(values))()} />
           ) : null}
           {transitionMutation.isSuccess ? (
             <Card className="border-emerald-300/70 bg-emerald-50/70 shadow-none dark:border-emerald-700/60 dark:bg-emerald-950/20">
               <CardContent className="flex items-center gap-3 p-4 text-sm text-emerald-950 dark:text-emerald-100">
                 <RefreshCcw className="h-4 w-4" />
-                Trang thai da duoc cap nhat. Timeline va summary da refetch.
+                Trạng thái đơn hàng đã được cập nhật.
               </CardContent>
             </Card>
           ) : null}
@@ -342,9 +318,9 @@ export default function ShipmentDetailPage() {
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Xac nhan cap nhat trang thai?"
-        description="Thao tac nay se goi shipment status transition endpoint hien co. Chi tiep tuc neu hub code, location va thoi diem da dung."
-        confirmLabel="Xac nhan cap nhat"
+        title="Xác nhận cập nhật trạng thái?"
+        description="Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng này không?"
+        confirmLabel="Xác nhận"
         onConfirm={() => transitionForm.handleSubmit((values) => transitionMutation.mutate(values))()}
         pending={transitionMutation.isPending}
       />

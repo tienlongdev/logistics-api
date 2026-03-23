@@ -20,6 +20,8 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string CorsPolicyName = "WebClientCors";
+
 // ============================================================
 // Serilog (structured logging)
 // ============================================================
@@ -48,6 +50,22 @@ var jwtOptions = builder.Configuration
 // Services
 // ============================================================
 builder.Services.AddControllers();
+
+var corsOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        policy
+            .WithOrigins(corsOrigins)
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -126,6 +144,8 @@ builder.Services.AddAuthorization(opts =>
 
 var app = builder.Build();
 
+await app.Services.MigrateAndSeedIdentityAsync(app.Configuration);
+
 // ============================================================
 // Middleware pipeline
 // ============================================================
@@ -136,6 +156,8 @@ app.UseSerilogRequestLogging();
 app.UseRateLimiter();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
+
+app.UseCors(CorsPolicyName);
 
 app.UseHttpsRedirection();
 

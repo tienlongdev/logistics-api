@@ -15,6 +15,19 @@ export const shipmentStatusTone: Record<ShipmentStatus, "default" | "secondary" 
 
 export const shipmentStatusOptions = [...shipmentStatuses];
 
+export const shipmentStatusLabel: Record<ShipmentStatus, string> = {
+  Created: "Đã tạo",
+  AwaitingPickup: "Chờ lấy hàng",
+  PickedUp: "Đã lấy hàng",
+  InTransit: "Đang vận chuyển",
+  OutForDelivery: "Đang giao hàng",
+  Delivered: "Đã giao",
+  DeliveryFailed: "Giao thất bại",
+  Returning: "Đang hoàn hàng",
+  Returned: "Đã hoàn hàng",
+  Cancelled: "Đã hủy",
+};
+
 export const shipmentStatusValueMap: Record<ShipmentStatus, number> = {
   Created: 1,
   AwaitingPickup: 2,

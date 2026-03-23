@@ -1,7 +1,6 @@
-import { ArrowRightLeft, ShieldCheck } from "lucide-react";
+import { PackageCheck, Route, Search } from "lucide-react";
 
 import { LoginForm } from "@/components/forms/login-form";
-import { Badge } from "@/components/ui/badge";
 
 export default function LoginPage() {
   return (
@@ -9,23 +8,28 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(8,145,178,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.1),transparent_24%)]" />
       <div className="relative grid w-full max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <section className="space-y-6">
-          <Badge variant="secondary" className="w-fit">Next.js + TanStack Query + Zustand + shadcn/ui</Badge>
+          <p className="section-kicker">Nền tảng vận chuyển</p>
           <h1 className="max-w-2xl text-4xl font-semibold leading-tight sm:text-5xl">
-            Dieu phoi shipment bang UI bam sat contract backend, khong dung endpoint tu dat ra.
+            Quản lý đơn hàng, theo dõi vận chuyển — mọi lúc, mọi nơi.
           </h1>
           <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-            Login se cap access token trong memory va su dung refresh flow that khi gap `401`, dung voi contract auth hien tai cua backend.
+            Đăng nhập để xem toàn bộ đơn hàng, trạng thái vận chuyển và lịch sử giao hàng của bạn.
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="surface-panel p-5">
-              <ShieldCheck className="mb-3 h-5 w-5 text-primary" />
-              <h2 className="font-medium">Contract-first auth</h2>
-              <p className="mt-2 text-sm text-muted-foreground">`POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` da duoc noi truc tiep vao typed client.</p>
+              <PackageCheck className="mb-3 h-5 w-5 text-primary" />
+              <h2 className="font-medium">Theo dõi đơn hàng</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Xem trạng thái toàn bộ đơn hàng theo thời gian thực.</p>
             </div>
             <div className="surface-panel p-5">
-              <ArrowRightLeft className="mb-3 h-5 w-5 text-primary" />
-              <h2 className="font-medium">Graceful backend gaps</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Cac man hinh shipment detail va cancel se render UI + TODO ro rang neu backend chua co endpoint tuong ung.</p>
+              <Route className="mb-3 h-5 w-5 text-primary" />
+              <h2 className="font-medium">Tra cứu vận đơn</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Xem hành trình giao hàng chi tiết theo mã vận đơn.</p>
+            </div>
+            <div className="surface-panel p-5">
+              <Search className="mb-3 h-5 w-5 text-primary" />
+              <h2 className="font-medium">Tìm kiếm nhanh</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Lọc đơn hàng theo người nhận, trạng thái và ngày giao.</p>
             </div>
           </div>
         </section>

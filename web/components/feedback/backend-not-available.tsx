@@ -10,7 +10,7 @@ interface BackendNotAvailableProps {
 
 export function BackendNotAvailable({
   description,
-  title = "Backend not available",
+  title = "Tính năng đang phát triển",
   todo,
 }: BackendNotAvailableProps) {
   return (
