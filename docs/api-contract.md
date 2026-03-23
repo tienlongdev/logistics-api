@@ -3,21 +3,34 @@
 > Base path: `/api/v{version}` (ví dụ: `/api/v1`)
 
 ## 0. Conventions
-### Headers
+### 0.1 Headers
 - `Authorization: Bearer <jwt>`
 - `X-Correlation-Id: <id>` (optional; server generates if missing)
 - `Idempotency-Key: <key>` (required for create shipment)
 
-### Response conventions
+### 0.2 Response conventions
 - Success: JSON DTO
-- Errors: `application/problem+json` (`ProblemDetails`) với `traceId` trong extensions
+- Errors: `application/problem+json` (ProblemDetails) có `traceId` + `correlationId`
 
-### Pagination (gợi ý)
-- `page`: 1-based
-- `pageSize`: max 100
-- Response include: `items`, `page`, `pageSize`, `total`
+### 0.3 Pagination (recommended)
+Request query:
+- `page` (1-based)
+- `pageSize` (max 100)
+
+Response:
+```json
+{
+  "items": [],
+  "page": 1,
+  "pageSize": 20,
+  "total": 0
+}
+```
+
+---
 
 ## 1. Auth
+
 ### POST `/api/v1/auth/login`
 Request
 ```json
@@ -26,6 +39,7 @@ Request
   "password": "P@ssw0rd!"
 }
 ```
+
 Response
 ```json
 {
@@ -41,26 +55,27 @@ Request
 { "refreshToken": "<opaque>" }
 ```
 
+Response
+```json
+{
+  "accessToken": "<jwt>",
+  "refreshToken": "<opaque-new>",
+  "expiresIn": 3600
+}
+```
+
 ### POST `/api/v1/auth/logout`
 Request
 ```json
 { "refreshToken": "<opaque>" }
 ```
 
-## 2. Merchants
-### GET `/api/v1/merchants/me` (Merchant)
-Response
-```json
-{
-  "merchantId": "uuid",
-  "merchantCode": "MCH0001",
-  "name": "Demo Merchant",
-  "email": "merchant@demo.com",
-  "phone": "090..."
-}
-```
+Response: `204 No Content`
 
-## 3. Shipments
+---
+
+## 2. Shipments
+
 ### POST `/api/v1/shipments`
 Headers:
 - `Idempotency-Key: <string>`
@@ -121,10 +136,10 @@ Response: shipment detail
 ### POST `/api/v1/shipments/{id}/cancel`
 Request
 ```json
-{
-  "reason": "Merchant requested cancellation"
-}
+{ "reason": "Merchant requested cancellation" }
 ```
+
+Response: shipment summary
 
 ### POST `/api/v1/shipments/{id}/status-transitions`
 Request
@@ -148,7 +163,10 @@ Response
 }
 ```
 
-## 4. Tracking (public)
+---
+
+## 3. Tracking (public)
+
 ### GET `/api/v1/tracking/{trackingCode}`
 Response
 ```json
@@ -177,43 +195,10 @@ Response
 }
 ```
 
-## 5. Hubs
-### POST `/api/v1/hubs` (Admin)
-Request
-```json
-{
-  "code": "HUB-HCM-001",
-  "name": "Kho HCM Quận 1",
-  "hubType": "OriginHub",
-  "province": "HCM",
-  "district": "Q1",
-  "address": "12 ..."
-}
-```
+---
 
-## 6. Search
-### GET `/api/v1/search/shipments`
-Query params:
-- `q` (full text)
-- `trackingCode`, `shipmentCode`
-- `merchantCode`
-- `receiverPhone`
-- `status`
-- `fromDate`, `toDate`
-- `page`, `pageSize`
-- `sort` (e.g. `createdAt:desc`)
+## 4. Webhooks
 
-Response:
-```json
-{
-  "items": [],
-  "page": 1,
-  "pageSize": 20,
-  "total": 0
-}
-```
-
-## 7. Webhooks
 ### POST `/api/v1/webhooks/subscriptions`
 Request
 ```json
@@ -225,8 +210,20 @@ Request
 
 ### Signature convention (HMAC)
 - Header: `X-Webhook-Signature: sha256=<hex>`
-- Signature = HMACSHA256(secret, raw_body)
+- Signature = `HMACSHA256(secret, raw_body)`
 
-## 8. Reconciliation
-### GET `/api/v1/reconciliation/cod-transactions`
-Filters: `merchantCode`, `status`, `fromDate`, `toDate`
+---
+
+## 5. Search
+
+### GET `/api/v1/search/shipments`
+Query params:
+- `q`
+- `trackingCode`
+- `shipmentCode`
+- `merchantCode`
+- `receiverPhone`
+- `status`
+- `fromDate`, `toDate`
+- `page`, `pageSize`
+- `sort` (e.g. `createdAt:desc`)

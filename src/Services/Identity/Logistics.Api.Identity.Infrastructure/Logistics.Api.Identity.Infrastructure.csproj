@@ -11,7 +11,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.16.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Logistics.Api.Identity.Application\Logistics.Api.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Logistics.Api.BuildingBlocks.Infrastructure\Logistics.Api.BuildingBlocks.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

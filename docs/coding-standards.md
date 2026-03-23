@@ -4,68 +4,52 @@
 - Production-ready, maintainable, testable
 - Không nhét business logic vào Controller
 - Validate input ở Application layer (FluentValidation)
-- Domain model giữ invariants; tracking timeline là first-class
+- Domain model giữ invariants; tracking timeline là first-class feature
 - Logs/traces/metrics phải đủ để vận hành (correlation id everywhere)
 
-## 2. Project structure rules
-- Mỗi module có 3 layers:
-  - `*.Domain`: Entities, VOs, domain services, domain events
-  - `*.Application`: Commands/Queries/Handlers, DTOs, validators, orchestrations
-  - `*.Infrastructure`: EF DbContext, persistence, external clients, message bus adapters
-- `Host` chỉ wiring, middleware, module registration, controllers/endpoints
+## 2. Layer rules
+- `*.Domain`: không reference `Infrastructure`
+- `*.Application`: không reference `Infrastructure`
+- `*.Infrastructure`: có thể reference Application/Domain
+- `Host`: chỉ wiring; không chứa domain logic
 
 ## 3. Naming conventions
-- Namespace: `Logistics.Api.<Module>.<Layer>`
-- Command/Query:
-  - `CreateShipmentCommand`
-  - `GetShipmentByTrackingCodeQuery`
-- Handler:
-  - `CreateShipmentCommandHandler`
-- DTO:
-  - `ShipmentDto`, `CreateShipmentRequest`
-- Errors:
-  - `ShipmentErrors.InvalidStateTransition`
+- Command/Query: `VerbNounCommand`, `GetXxxQuery`
+- Handler: `XxxHandler`
+- DTO: `XxxDto`, `CreateXxxRequest`, `XxxResponse`
+- Errors: stable `Error.Code` (vd: `shipments.invalid_state_transition`)
 
 ## 4. Error handling
-- Application handlers return `Result` / `Result<T>` (khuyến nghị)
-- Exceptions chỉ dùng cho truly exceptional (infra failures, programmer errors)
-- API trả `ProblemDetails` chuẩn
+- Prefer `Result` / `Result<T>` trong Application layer
+- Exceptions dành cho infra failures (DB down, network)
+- API trả ProblemDetails thống nhất
 
 ## 5. Validation
 - FluentValidation
-- Không rely vào DataAnnotations cho business validation
-- Validation errors map ra ProblemDetails với details per field
+- Không rely vào DataAnnotations cho business rules
+- Validation errors trả 400 và chỉ rõ field
 
-## 6. Logging
-- Log structured (Serilog)
-- Không log raw secrets/token/password
-- Redact PII nếu cần (roadmap)
-- CorrelationId phải luôn có trong log context
+## 6. Logging & security
+- Không log password/token/api key plain
+- Mask/Redact PII khi cần (roadmap)
+- Luôn attach `CorrelationId`
 
-## 7. Database & EF Core
+## 7. Database
 - Migrations-only
-- Không dùng `EnsureCreated`
-- Không disable tracking bừa bãi; query read-model có thể dùng `AsNoTracking()`
-- Index và constraints phải reflect business invariants
-- Soft delete chỉ dùng khi thật cần (cân nhắc)
+- Unique index cho invariants (trackingCode, idempotencyKey)
+- Dùng `AsNoTracking()` cho read models khi phù hợp
 
 ## 8. Messaging
-- Publish integration events qua Outbox (không publish trực tiếp sau SaveChanges)
-- Consumers phải idempotent (Inbox table hoặc equivalent)
-- Retry + DLQ strategy rõ ràng
+- Publish integration events qua Outbox
+- Consumer idempotent (Inbox)
+- Retry + DLQ rõ ràng
 
-## 9. Webhook rules
-- Persist delivery attempt results
+## 9. Webhooks
+- Persist deliveries
 - Retry exponential backoff
-- HMAC signature
-- Timeouts + circuit breaker (Polly) khi gọi merchant
+- HMAC signature, timeout, circuit breaker
 
 ## 10. Testing
-- Unit tests cho domain/application logic
-- Integration tests dùng Testcontainers
-- Architecture tests để enforce dependency rules
-
-## 11. Pull request guidelines (nếu dùng)
-- Mỗi PR/commit tập trung 1 chủ đề (small, reviewable)
-- Update docs nếu có thay đổi contract/schema
-- Không merge nếu build/test fail
+- Unit tests: domain rules, state machine
+- Integration tests: Testcontainers + API end-to-end
+- Architecture tests: enforce dependency rules

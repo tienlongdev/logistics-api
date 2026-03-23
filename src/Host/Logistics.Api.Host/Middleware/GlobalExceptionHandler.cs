@@ -1,12 +1,15 @@
 using System.Net;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Logistics.Api.Host.Middleware;
 
 /// <summary>
-/// Exception handler tập trung, trả về ProblemDetails.
-/// Step 2: xử lý generic. Step sau sẽ mở rộng mapping domain/application exceptions.
+/// Centralised exception handler.
+/// Maps FluentValidation.ValidationException → 400 ValidationProblemDetails (A2).
+/// Maps all other exceptions → 500 ProblemDetails.
+/// Always includes traceId (= CorrelationId set by CorrelationIdMiddleware).
 /// </summary>
 public sealed class GlobalExceptionHandler : IExceptionHandler
 {
@@ -17,9 +20,34 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         _logger = logger;
     }
 
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
     {
         var traceId = httpContext.TraceIdentifier;
+
+        if (exception is ValidationException validationException)
+        {
+            var errors = validationException.Errors
+                .GroupBy(e => e.PropertyName, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray());
+
+            var validationProblem = new ValidationProblemDetails(errors)
+            {
+                Title = "Dữ liệu đầu vào không hợp lệ.",
+                Status = StatusCodes.Status400BadRequest,
+                Instance = httpContext.Request.Path
+            };
+            validationProblem.Extensions["traceId"] = traceId;
+
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            httpContext.Response.ContentType = "application/problem+json";
+            await httpContext.Response.WriteAsJsonAsync(validationProblem, cancellationToken);
+            return true;
+        }
 
         _logger.LogError(exception, "Unhandled exception. TraceId={TraceId}", traceId);
 
@@ -32,12 +60,12 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             Status = (int)HttpStatusCode.InternalServerError,
             Instance = httpContext.Request.Path
         };
-
         problem.Extensions["traceId"] = traceId;
 
-        httpContext.Response.StatusCode = problem.Status.Value;
+        httpContext.Response.StatusCode = problem.Status!.Value;
+        httpContext.Response.ContentType = "application/problem+json";
         await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
-
         return true;
     }
 }
+
