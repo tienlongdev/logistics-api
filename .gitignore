@@ -21,3 +21,11 @@ artifacts/
 publish/
 .DS_Store
 Thumbs.db
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+*.iml
+
+# Rider user-specific
+*.DotSettings.user
